@@ -10,5 +10,5 @@ pool:
   name: Azure Pipelines
 
 steps:
--checkout self
--checkout git://Domino/CloudMine
+- checkout: self
+- checkout: git://Domino/CloudMine@master
