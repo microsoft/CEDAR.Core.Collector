@@ -41,14 +41,14 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Build Azure DevOps collectors'
   inputs:
-    projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
+    projects: 's\CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
     arguments: '-c Release --no-restore'
 
 - task: DotNetCoreCLI@2
   displayName: 'Test Azure DevOps collectors'
   inputs:
     command: test
-    projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
+    projects: 's\CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
     arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
 
 - task: ArchiveFiles@2
