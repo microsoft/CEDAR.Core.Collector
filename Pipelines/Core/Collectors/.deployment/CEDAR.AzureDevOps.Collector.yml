@@ -1,0 +1,73 @@
+# This pipeline validates changes in CEDAR.Core.Collector against CEDAR.AzureDevOps.Collector product to ensure that the
+# changes done in the core library does not cause regressions in the product.
+# This is done by checking out both CEDAR.Core.Collector (from GitHub) and CEDAR.AzureDevOps.Collector (from ADO) repos
+# and then reconstructing the right folder structure by moving Core.Collector inside AzureDevOps.Collector. Finally, the
+# pipeline build and tests AzureDevOps.Collector.
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth).$(Rev:r)
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+
+- checkout: self
+  path: s\Core.Collectors
+
+- checkout: git://Domino/CloudMine@master
+  path: s\CloudMine
+
+- powershell: |
+   $submoduleDirectory = "$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\Core\Collectors"
+   Copy-Item "$(System.DefaultWorkingDirectory)\Core.Collectors\*" -Destination $submoduleDirectory -Recurse
+  displayName: 'Copy Core.Collectors into CloudMine as a submodule'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet'
+  inputs:
+    command: restore
+    projects: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
+    feedsToUse: config
+    nugetConfigPath: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\Collectors\NuGet.config'
+    externalFeedCredentials: 'Domino Nuget (CloudBuild VSO account), MerlinBot MSblox'
+    verbosityRestore: Minimal
+
+- task: UseDotNet@2
+  displayName: 'Use .Net Core sdk 3.0'
+  inputs:
+    version: 3.1.200
+    installationPath: '$(Agent.ToolsDirectory)\dotnet'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build Azure DevOps collectors'
+  inputs:
+    projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
+    arguments: '-c Release --no-restore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Test Azure DevOps collectors'
+  inputs:
+    command: test
+    projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
+    arguments: '--configuration $(buildConfiguration) --no-restore --collect "Code coverage"'
+
+- task: ArchiveFiles@2
+  displayName: 'Archive Azure DevOps collectors'
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.Functions\bin\Release\netcoreapp3.1'
+    includeRootFolder: false
+    archiveFile: '$(Build.ArtifactStagingDirectory)\AzureDevOps.Collectors.Functions$(Build.BuildId).zip'
+
+- task: CopyFiles@2
+  displayName: 'Copy Build output'
+  inputs:
+    SourceFolder: '$(Build.StagingDirectory)'
+    TargetFolder: '$(build.ArtifactStagingDirectory)\output'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\output'
