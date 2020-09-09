@@ -51,7 +51,7 @@ steps:
   inputs:
     command: test
     projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
-    arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
+    arguments: '--configuration $(buildConfiguration) --no-restore --collect "Code coverage"'
 
 - task: ArchiveFiles@2
   displayName: 'Archive Azure DevOps collectors'
