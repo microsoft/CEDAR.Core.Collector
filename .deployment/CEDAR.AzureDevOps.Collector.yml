@@ -1,7 +1,8 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# This pipeline validates changes in CEDAR.Core.Collector against CEDAR.AzureDevOps.Collector product to ensure that the
+# changes done in the core library does not cause regressions in the product.
+# This is done by checking out both CEDAR.Core.Collector (from GitHub) and CEDAR.AzureDevOps.Collector (from ADO) repos
+# and then reconstructing the right folder structure by moving Core.Collector inside AzureDevOps.Collector. Finally, the
+# pipeline build and tests AzureDevOps.Collector.
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth).$(Rev:r)
 
