@@ -12,10 +12,10 @@ pool:
 steps:
 
 - checkout: self
-  path: Core.Collectors
+  path: s\Core.Collectors
 
 - checkout: git://Domino/CloudMine@master
-  path: CloudMine
+  path: s\CloudMine
 
 - powershell: |
    $submoduleDirectory = "$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\Core\Collectors"
