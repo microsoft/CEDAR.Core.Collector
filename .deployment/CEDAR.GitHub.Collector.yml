@@ -11,7 +11,8 @@ resources:
   - repository: CEDAR.GitHub.Collector
     type: github
     endpoint: microsoft/CEDAR
-    name: microsoft/CEDAR.GitHub.Collector@main
+    name: microsoft/CEDAR.GitHub.Collector
+    ref: main
 
 trigger:
 - main
