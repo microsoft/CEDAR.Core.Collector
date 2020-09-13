@@ -11,7 +11,7 @@ resources:
   - repository: CEDAR.GitHub.Collector
     type: github
     endpoint: microsoft/CEDAR
-    name: microsoft/CEDAR.GitHub.Collector
+    name: microsoft/CEDAR.GitHub.Collector@main
 
 trigger:
 - main
@@ -24,7 +24,7 @@ steps:
 - checkout: self
   path: s\CEDAR.Core.Collector
 
-- checkout: CEDAR.GitHub.Collector@main
+- checkout: CEDAR.GitHub.Collector
   path: s\CEDAR.GitHub.Collector
 
 - powershell: |
