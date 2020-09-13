@@ -29,7 +29,7 @@ steps:
   path: s\CEDAR.GitHub.Collector
 
 - powershell: |
-   $submoduleDirectory = "$(System.DefaultWorkingDirectory)\CEDAR.GitHub.Collector"
+   $submoduleDirectory = "$(System.DefaultWorkingDirectory)\CEDAR.GitHub.Collector\CEDAR.Core.Collector"
    Copy-Item "$(System.DefaultWorkingDirectory)\CEDAR.Core.Collector\*" -Destination $submoduleDirectory -Recurse
   displayName: 'Copy CEDAR.Core.Collector into CEDAR.GitHub.Collector as a submodule'
 
@@ -40,7 +40,6 @@ steps:
     projects: 'CEDAR.GitHub.Collector\GitHub.Collectors.sln'
     feedsToUse: config
     nugetConfigPath: 'NuGet.config'
-    externalFeedCredentials: 'Domino Nuget (CloudBuild VSO account), MerlinBot MSblox'
 
 - task: UseDotNet@2
   displayName: 'Use .Net Core sdk 3.0'
