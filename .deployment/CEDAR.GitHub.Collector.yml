@@ -24,7 +24,7 @@ steps:
 - checkout: self
   path: s\CEDAR.Core.Collector
 
-- checkout: CEDAR.GitHub.Collector
+- checkout: CEDAR.GitHub.Collector@main
   path: s\CEDAR.GitHub.Collector
 
 - powershell: |
