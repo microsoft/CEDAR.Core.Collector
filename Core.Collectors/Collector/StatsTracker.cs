@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using System;
@@ -41,15 +40,20 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     {
         private readonly ITelemetryClient telemetryClient;
         private readonly IWebRequestStatsTracker webRequestStatsTracker;
-        private readonly RecordWriterCore<FunctionContext> recordWriter;
+        private readonly IRecordStatsTracker recordStatsTracker;
 
         private readonly Timer statsTracker;
 
-        public StatsTracker(ITelemetryClient telemetryClient, IWebRequestStatsTracker webRequestStatsTracker, RecordWriterCore<FunctionContext> recordWriter, TimeSpan refreshFrequncy)
+        public StatsTracker(ITelemetryClient telemetryClient, IWebRequestStatsTracker webRequestStatsTracker, TimeSpan refreshFrequncy)
+            : this(telemetryClient, webRequestStatsTracker, recordStatsTracker: null, refreshFrequncy)
+        {
+        }
+
+        public StatsTracker(ITelemetryClient telemetryClient, IWebRequestStatsTracker webRequestStatsTracker, IRecordStatsTracker recordStatsTracker, TimeSpan refreshFrequncy)
         {
             this.telemetryClient = telemetryClient;
             this.webRequestStatsTracker = webRequestStatsTracker;
-            this.recordWriter = recordWriter;
+            this.recordStatsTracker = recordStatsTracker;
 
             this.statsTracker = new Timer(LogStats, state: null, dueTime: TimeSpan.Zero, period: refreshFrequncy);
         }
@@ -70,28 +74,32 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 { "FailedRequestCount", failedRequestCount.ToString() },
             };
 
-            ConcurrentDictionary<string, int> recordStats = this.recordWriter.RecordStats;
-            List<string> recordTypes = new List<string>(recordStats.Keys);
-            recordTypes.Sort();
-
-            string recordCountSummary = $"Record count summary: ";
-            int totalRecordCount = 0;
-            foreach (string recordType in recordTypes)
+            if (this.recordStatsTracker != null)
             {
-                int recordCount = recordStats[recordType];
-                totalRecordCount += recordCount;
-                properties.Add($"{recordType}.RecordCount", recordCount.ToString());
+                ConcurrentDictionary<string, int> recordStats = this.recordStatsTracker.RecordStats;
+                List<string> recordTypes = new List<string>(recordStats.Keys);
+                recordTypes.Sort();
 
-                recordCountSummary += $"{recordType} = {recordCount}, ";
+                string recordCountSummary = $"Record count summary: ";
+                int totalRecordCount = 0;
+                foreach (string recordType in recordTypes)
+                {
+                    int recordCount = recordStats[recordType];
+                    totalRecordCount += recordCount;
+                    properties.Add($"{recordType}.RecordCount", recordCount.ToString());
+
+                    recordCountSummary += $"{recordType} = {recordCount}, ";
+                }
+
+                properties.Add("TotalRecordCount", totalRecordCount.ToString());
+                recordCountSummary += $"Total = {totalRecordCount}";
+
+#if DEBUG
+                this.telemetryClient.LogInformation(recordCountSummary);
+#endif
             }
 
-            properties.Add("TotalRecordCount", totalRecordCount.ToString());
-            recordCountSummary += $"Total = {totalRecordCount}";
-
             this.telemetryClient.TrackEvent("CollectionStats", properties);
-#if DEBUG
-            this.telemetryClient.LogInformation(recordCountSummary);
-#endif
         }
 
         public void Stop()
