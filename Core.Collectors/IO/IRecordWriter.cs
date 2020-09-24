@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
 {
-    public interface IRecordWriter : IDisposable
+    public interface IRecordWriter : IRecordStatsTracker, IDisposable
     {
         IEnumerable<string> OutputPaths { get; }
         void SetOutputPathPrefix(string outputPathPrefix);

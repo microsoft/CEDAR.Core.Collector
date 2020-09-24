@@ -4,6 +4,7 @@
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,6 +15,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.IO
         private readonly List<Tuple<JObject, RecordContext>> records;
 
         public IEnumerable<string> OutputPaths => throw new NotImplementedException();
+
+        public ConcurrentDictionary<string, int> RecordStats => throw new NotImplementedException();
 
         public InMemoryRecordWriter()
         {
