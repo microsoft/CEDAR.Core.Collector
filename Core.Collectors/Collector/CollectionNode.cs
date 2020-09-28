@@ -49,7 +49,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         /// </summary>
         public Func<JObject, bool> HaltCollection { get; set; } = record => false;
 
-        public List<HttpResponseSignature> WhitelistedResponses = new List<HttpResponseSignature>();
+        public List<HttpResponseSignature> AllowlistedResponses = new List<HttpResponseSignature>();
 
         public abstract object Clone();
     }
