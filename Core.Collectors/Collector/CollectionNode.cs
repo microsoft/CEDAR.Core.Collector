@@ -51,10 +51,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public List<HttpResponseSignature> AllowlistedResponses = new List<HttpResponseSignature>();
 
-        [ObsoleteAttribute("This property is deprecated and will be removed in the next revision for compliance reasons. Use AllowlistedResponses instead.")]
-        public List<HttpResponseSignature> WhitelistedResponses { get { return AllowlistedResponses; } set { AllowlistedResponses = WhitelistedResponses; } }
-
-
         public abstract object Clone();
     }
 }
