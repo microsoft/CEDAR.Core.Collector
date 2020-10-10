@@ -244,10 +244,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             JObject metadata = (JObject)metadataToken;
-            metadata.Add("FunctionStartDate", this.functionContext.FunctionStartDate);
+
+            this.contextWriter.AugmentMetadata(metadata, this.functionContext);
+
             metadata.Add("RecordType", recordContext.RecordType);
-            metadata.Add("SessionId", this.functionContext.SessionId);
-            metadata.Add("CollectorType", this.functionContext.CollectorType.ToString());
             metadata.Add("CollectionDate", DateTime.UtcNow);
 
             Dictionary<string, JToken> additionalMetadata = recordContext.AdditionalMetadata;
@@ -258,8 +258,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     metadata.Add(metadataItem.Key, metadataItem.Value);
                 }
             }
-
-            this.contextWriter.AugmentMetadata(metadata, this.functionContext);
 
             metadata.Add("RecordSha", HashUtility.ComputeSha512(serializedRecord));
         }
