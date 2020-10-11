@@ -37,8 +37,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
 
             this.enableLoopDetection = true;
-            this.previousRecordCount = 0;
-            this.previousRecordStrings = new List<string>();
+            this.previousRecordCount = -1;
+            this.previousRecordStrings = null;
         }
 
         public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
