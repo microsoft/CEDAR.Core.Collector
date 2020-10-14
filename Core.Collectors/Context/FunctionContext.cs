@@ -24,6 +24,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Context
         /// <summary>
         /// For functions that are running on a schedule, represents the time the collection should have started.
         /// </summary>
-        public DateTime SliceDate { get; set; }
+        public DateTime SliceDate { get; set; } = DateTime.MinValue;
     }
 }
