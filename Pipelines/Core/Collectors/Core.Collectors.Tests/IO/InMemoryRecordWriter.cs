@@ -46,7 +46,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.IO
 
         public Task NewOutputAsync(string outputSuffix, int fileIndex = 0)
         {
-            throw new NotImplementedException();
+            // Assume successful.
+            return Task.CompletedTask;
         }
 
         public void SetOutputPathPrefix(string outputPathPrefix)
