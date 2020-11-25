@@ -165,6 +165,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 throw new FatalTerminalException($"For '{collectorType}' collector, no default storage or collector specific storage configuration is provided in Settings.json");
             }
 
+            return this.GetStorageManagerInternal(recordWritersArray, telemetryClient);
+        }
+
+        protected virtual StorageManager GetStorageManagerInternal(JArray recordWritersArray, ITelemetryClient telemetryClient)
+        {
             return new StorageManager(recordWritersArray, telemetryClient);
         }
     }

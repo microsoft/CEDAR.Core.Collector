@@ -26,33 +26,34 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private CloudQueue queue;
 
         public AzureBlobRecordWriter(string blobRoot,
-                                     string outputQueueName,
-                                     string identifier,
-                                     ITelemetryClient telemetryClient,
-                                     T functionContext,
-                                     ContextWriter<T> contextWriter,
-                                     string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
-                                     string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
-            : this(blobRoot, outputQueueName, identifier, telemetryClient, functionContext, contextWriter, outputPathPrefix: null, storageConnectionEnvironmentVariable, notificationQueueConnectionEnvironmentVariable)
+                             string outputQueueName,
+                             string identifier,
+                             ITelemetryClient telemetryClient,
+                             T functionContext,
+                             ContextWriter<T> contextWriter,
+                             string outputPathPrefix,
+                             string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
+                             string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
+            : this(blobRoot, outputQueueName, identifier, telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueConnectionEnvironmentVariable)
         {
+            this.SetOutputPathPrefix(outputPathPrefix);
         }
+
         public AzureBlobRecordWriter(string blobRoot,
                                      string outputQueueName,
                                      string identifier,
                                      ITelemetryClient telemetryClient,
                                      T functionContext,
                                      ContextWriter<T> contextWriter,
-                                     string outputPathPrefix,
                                      string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
                                      string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
-            : base(identifier, telemetryClient, functionContext, contextWriter, outputPathPrefix, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureBlob)
+            : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureBlob)
         {
             this.blobRoot = blobRoot;
             this.outputQueueName = outputQueueName;
             this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
             this.notificationQueueConnectionEnvironmentVariable = notificationQueueConnectionEnvironmentVariable;
         }
-
 
         protected override async Task InitializeInternalAsync()
         {
