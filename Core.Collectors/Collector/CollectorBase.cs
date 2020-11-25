@@ -79,7 +79,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 counter++;
                 HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
 
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == HttpStatusCode.NoContent)
+                {
+                    // Responses with empty bodies cannot be deserialized
+                    continue;
+                }
+                else if (response.IsSuccessStatusCode)
                 {
                     SerializedResponse serializedResponse = await this.ParseResponseAsync(response, collectionNode).ConfigureAwait(false);
                     IEnumerable<JObject> records = serializedResponse.Records;
