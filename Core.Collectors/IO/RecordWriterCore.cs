@@ -43,7 +43,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                    ITelemetryClient telemetryClient,
                                    T functionContext,
                                    ContextWriter<T> contextWriter,
-                                   string outputPathPrefix,
                                    long recordSizeLimit,
                                    long fileSizeLimit,
                                    RecordWriterSource source)
@@ -52,7 +51,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             this.TelemetryClient = telemetryClient;
             this.functionContext = functionContext;
             this.contextWriter = contextWriter;
-            this.outputPathPrefix = outputPathPrefix;
             this.recordSizeLimit = recordSizeLimit;
             this.fileSizeLimit = fileSizeLimit;
             this.outputPaths = new List<string>();

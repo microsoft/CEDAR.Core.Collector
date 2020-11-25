@@ -28,10 +28,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             this.initialized = false;
         }
 
-        public List<IRecordWriter> InitializeRecordWriters<T>(string identifier,
-                                                              T functionContext,
-                                                              ContextWriter<T> contextWriter,
-                                                              AdlsClient adlsClient) where T : FunctionContext
+        public List<IRecordWriter> InitializeRecordWriters<T>(string identifier, T functionContext, ContextWriter<T> contextWriter, AdlsClient adlsClient) where T : FunctionContext
         {
             if (this.initialized)
             {
@@ -70,9 +67,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                             throw new FatalTerminalException("AzureBlob storage must provide a RootContainer and an OutputQueueName.");
                         }
 
+                        JToken storageConnectionEnvironmentVariableToken = recordWriterToken.SelectToken("StorageConnectionEnvironmentVariable");
+                        JToken notificationQueueEnvironmentVariableToken = recordWriterToken.SelectToken("NotificationQueueEnvironmentVariable");
+
+                        // The following are optional (only used in Azure DevOps right now), so permit these values (tokens) to be null.
+                        string storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariableToken?.Value<string>();
+                        string notificationQueueEnvironmentVariable = notificationQueueEnvironmentVariableToken?.Value<string>();
+
                         string rootContainer = rootContainerToken.Value<string>();
                         string outputQueueName = outputQueueNameToken.Value<string>();
-                        IRecordWriter blobRecordWriter = new AzureBlobRecordWriter<T>(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter);
+                        IRecordWriter blobRecordWriter = this.ConstructAzureBlobWriter(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueEnvironmentVariable);
                         this.recordWriters.Add(blobRecordWriter);
                         break;
                     default:
@@ -86,6 +90,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             }
 
             return new List<IRecordWriter>(this.recordWriters);
+        }
+
+        protected virtual AzureBlobRecordWriter<T> ConstructAzureBlobWriter<T>(string rootContainer,
+                                                                               string outputQueueName,
+                                                                               string identifier,
+                                                                               ITelemetryClient telemetryClient,
+                                                                               T functionContext,
+                                                                               ContextWriter<T> contextWriter,
+                                                                               string storageConnectionEnvironmentVariable,
+                                                                               string notificationQueueEnvironmentVariable) where T : FunctionContext
+        {
+            return new AzureBlobRecordWriter<T>(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter);
         }
 
         /// <summary>
