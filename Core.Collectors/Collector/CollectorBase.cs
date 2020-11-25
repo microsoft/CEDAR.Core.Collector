@@ -49,8 +49,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             this.recordWriters = recordWriters;
 
             this.enableLoopDetection = enableLoopDetection;
-            this.previousRecordCount = 0;
-            this.previousRecordStrings = new List<string>();
+            this.previousRecordCount = -1;
+            this.previousRecordStrings = null;
         }
 
         protected abstract IBatchingHttpRequest WrapIntoBatchingHttpRequest(T collectionNode);

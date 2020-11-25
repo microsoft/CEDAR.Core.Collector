@@ -36,9 +36,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                     ITelemetryClient telemetryClient,
                                     T functionContext,
                                     ContextWriter<T> contextWriter,
-                                    string root)
-            : this(adlsClient, identifier, telemetryClient, functionContext, contextWriter, root, outputPathPrefix: null)
+                                    string root,
+                                    string outputPathPrefix)
+            : this(adlsClient, identifier, telemetryClient, functionContext, contextWriter, root)
         {
+            this.SetOutputPathPrefix(outputPathPrefix);
         }
 
         public AdlsBulkRecordWriter(AdlsClient adlsClient,
@@ -46,9 +48,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                     ITelemetryClient telemetryClient,
                                     T functionContext,
                                     ContextWriter<T> contextWriter,
-                                    string root,
-                                    string outputPathPrefix)
-            : base(identifier, telemetryClient, functionContext, contextWriter, outputPathPrefix, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureDataLake)
+                                    string root)
+            : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureDataLake)
         {
             this.adlsClient = adlsClient;
             this.adlsRoot = root;
