@@ -82,10 +82,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                 if (response.StatusCode == HttpStatusCode.NoContent)
                 {
-                    // Responses with empty bodies cannot be deserialized
-                    continue;
+                    // Responses with empty bodies cannot be deserialized and are not expected to have continuations
+                    break;
                 }
-                else if (response.IsSuccessStatusCode)
+
+                if (response.IsSuccessStatusCode)
                 {
                     SerializedResponse serializedResponse = await this.ParseResponseAsync(response, collectionNode).ConfigureAwait(false);
                     IEnumerable<JObject> records = serializedResponse.Records;
@@ -274,7 +275,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                         };
                         this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
                     }
-                    else 
+                    else
                     {
                         childNodeClone.AdditionalMetadata.Add(parentMetadataName, parentMetadataValue);
                     }
