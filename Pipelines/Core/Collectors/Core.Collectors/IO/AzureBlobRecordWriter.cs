@@ -26,20 +26,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private CloudQueue queue;
 
         public AzureBlobRecordWriter(string blobRoot,
-                             string outputQueueName,
-                             string identifier,
-                             ITelemetryClient telemetryClient,
-                             T functionContext,
-                             ContextWriter<T> contextWriter,
-                             string outputPathPrefix,
-                             string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
-                             string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
-            : this(blobRoot, outputQueueName, identifier, telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueConnectionEnvironmentVariable)
-        {
-            this.SetOutputPathPrefix(outputPathPrefix);
-        }
-
-        public AzureBlobRecordWriter(string blobRoot,
                                      string outputQueueName,
                                      string identifier,
                                      ITelemetryClient telemetryClient,
