@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -62,6 +63,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             {
                 counter++;
                 HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
+
+                if (response.StatusCode == HttpStatusCode.NoContent)
+                {
+                    // Responses with empty bodies cannot be deserialized and are not expected to have continuations
+                    break;
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -252,7 +259,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                         };
                         this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
                     }
-                    else 
+                    else
                     {
                         childNodeClone.AdditionalMetadata.Add(parentMetadataName, parentMetadataValue);
                     }
