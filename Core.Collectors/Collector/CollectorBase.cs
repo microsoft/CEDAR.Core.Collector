@@ -26,22 +26,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private List<string> previousRecordStrings;
         private int previousRecordCount;
 
-        public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, IRecordWriter recordWriter = null)
-        {
-            this.authentication = authentication;
-            this.telemetryClient = telemetryClient;
-
-            this.recordWriters = new List<IRecordWriter>();
-            if (recordWriter != null)
-            {
-                this.recordWriters.Add(recordWriter);
-            }
-
-            this.enableLoopDetection = true;
-            this.previousRecordCount = -1;
-            this.previousRecordStrings = null;
-        }
-
         public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
         {
             this.authentication = authentication;
