@@ -23,9 +23,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly string uniqueId;
         private readonly string adlsRoot;
+        private readonly string version;
         private readonly AdlsClient adlsClient;
 
-        private string version;
         private string localRoot;
 
         private string currentSuffix;
@@ -36,19 +36,19 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                     ITelemetryClient telemetryClient,
                                     T functionContext,
                                     ContextWriter<T> contextWriter,
-                                    string root)
+                                    string root,
+                                    string version)
             : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureDataLake)
         {
             this.adlsClient = adlsClient;
             this.adlsRoot = root;
+            this.version = version;
             this.uniqueId = functionContext.SessionId;
             this.currentSuffix = null;
         }
 
         protected override Task InitializeInternalAsync()
         {
-            string appEnvironment = Environment.GetEnvironmentVariable("AppEnv");
-            this.version = string.IsNullOrWhiteSpace(appEnvironment) ? "vLocal" : (appEnvironment.Equals("Staging") ? "vDev" : (appEnvironment.Equals("Production") ? "v3" : "vLocal"));
             this.localRoot = Path.Combine(Path.GetTempPath(), this.uniqueId);
             return Task.CompletedTask;
         }

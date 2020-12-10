@@ -50,13 +50,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 {
                     case "AzureDataLakeStorageV1":
                         JToken rootFolderToken = recordWriterToken.SelectToken("RootFolder");
-                        if (rootFolderToken == null)
+                        JToken versionToken = recordWriterToken.SelectToken("Version");
+                        if (rootFolderToken == null || versionToken == null)
                         {
-                            throw new FatalTerminalException("AzureDataLakeStorageV1 must provide a RootFolder.");
+                            throw new FatalTerminalException("AzureDataLakeStorageV1 must provide RootFolder and Version.");
                         }
 
                         string rootFolder = rootFolderToken.Value<string>();
-                        IRecordWriter adlsRecordWriter = new AdlsBulkRecordWriter<T>(adlsClient, identifier, telemetryClient, functionContext, contextWriter, root: rootFolder);
+                        string version = versionToken.Value<string>();
+                        IRecordWriter adlsRecordWriter = new AdlsBulkRecordWriter<T>(adlsClient, identifier, telemetryClient, functionContext, contextWriter, root: rootFolder, version);
                         this.recordWriters.Add(adlsRecordWriter);
                         break;
                     case "AzureBlob":
