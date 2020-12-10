@@ -51,13 +51,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                     case "AzureDataLakeStorageV1":
                         JToken rootFolderToken = recordWriterToken.SelectToken("RootFolder");
                         JToken versionToken = recordWriterToken.SelectToken("Version");
-                        if (rootFolderToken == null || versionToken == null)
+                        if (rootFolderToken == null)
                         {
-                            throw new FatalTerminalException("AzureDataLakeStorageV1 must provide RootFolder and Version.");
+                            throw new FatalTerminalException("AzureDataLakeStorageV1 must provide a RootFolder");
                         }
 
                         string rootFolder = rootFolderToken.Value<string>();
-                        string version = versionToken.Value<string>();
+                        string version = versionToken == null ? "v3" : versionToken.Value<string>(); // Temporarily permit versionToken to be null since otherwise it is an API-breaking change between Core and GH collectors.
                         IRecordWriter adlsRecordWriter = new AdlsBulkRecordWriter<T>(adlsClient, identifier, telemetryClient, functionContext, contextWriter, root: rootFolder, version);
                         this.recordWriters.Add(adlsRecordWriter);
                         break;
