@@ -82,7 +82,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     {
                         if (counter == 1)
                         {
-                            // New batch, reset state for loop detection.
+                            // New request (batch), reset state for loop detection.
                             this.previousRecordCount = -1;
                             this.previousRecordStrings = null;
                         }
