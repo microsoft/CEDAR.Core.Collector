@@ -93,7 +93,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             Stopwatch uploadTimer = Stopwatch.StartNew();
-            string adlsDirectory = $"/local/Private/Upload/{this.adlsRoot}/{this.version}";
+            string adlsDirectory = $"{this.adlsRoot}/{this.version}";
             try
             {
                 TransferStatus status = this.adlsClient.BulkUpload(this.localRoot, adlsDirectory);
