@@ -78,9 +78,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     batchingHttpRequest.UpdateAvailability(serializedResponse.Response, recordCount);
 
                     // Check for looping. Majority of the requests won't have any batching at all, so start checking only after the very first call.
-                    if (this.enableLoopDetection && counter > 1 && this.DetectLooping(records))
+                    if (this.enableLoopDetection)
                     {
-                        throw new FatalTerminalException($"Terminating activity due to loop detection during batching. The following requests resulted with the same response: '{batchingHttpRequest.PreviousUrl}', '{batchingHttpRequest.CurrentUrl}'.");
+                        if (counter == 1)
+                        {
+                            // New request (batch), reset state for loop detection.
+                            this.previousRecordCount = -1;
+                            this.previousRecordStrings = null;
+                        }
+                        else if (this.DetectLooping(records))
+                        {
+                            throw new FatalTerminalException($"Terminating activity due to loop detection during batching. The following requests resulted with the same response: '{batchingHttpRequest.PreviousUrl}', '{batchingHttpRequest.CurrentUrl}'.");
+                        }
                     }
 
                     foreach (JObject record in records)
