@@ -13,6 +13,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,16 +25,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private const long RecordSizeLimit = 1024 * 1024 * 4; // 4 MB.
 
         private readonly string blobRoot;
-        private readonly string notificationQueueName;
+        private readonly string notificationQueuePrefix;
         private readonly string storageConnectionEnvironmentVariable;
-        private readonly string notificationQueueConnectionEnvironmentVariable;
 
-        private CloudQueue notificationQueue;
         private CloudBlobContainer outContainer;
 
         private readonly T functionContext;
         private readonly ContextWriter<T> contextWriter;
-        private readonly List<string> outputPaths;
         private readonly Dictionary<string, WriterState> writers;
         private bool initialized;
 
@@ -44,34 +42,37 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public ConcurrentDictionary<string, int> RecordStats { get; }
 
         public SplitAzureBlobRecordWriter(string blobRoot,
-                                          string notificationQueueName,
+                                          string notificationQueuePrefix,
                                           ITelemetryClient telemetryClient,
                                           T functionContext,
                                           ContextWriter<T> contextWriter,
-                                          string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
-                                          string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
+                                          string storageConnectionEnvironmentVariable)
         {
             this.blobRoot = blobRoot;
-            this.notificationQueueName = notificationQueueName;
+            this.notificationQueuePrefix = notificationQueuePrefix;
             this.functionContext = functionContext;
             this.contextWriter = contextWriter;
             this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
-            this.notificationQueueConnectionEnvironmentVariable = notificationQueueConnectionEnvironmentVariable;
 
             this.TelemetryClient = telemetryClient;
 
-            this.outputPaths = new List<string>();
             this.writers = new Dictionary<string, WriterState>();
             this.initialized = false;
 
             this.RecordStats = new ConcurrentDictionary<string, int>();
         }
 
-        public IEnumerable<string> OutputPaths => this.outputPaths;
+        public IEnumerable<string> OutputPaths => this.GetOutputPaths();
 
-        protected void AddOutputPath(string outputPath)
+        private IEnumerable<string> GetOutputPaths()
         {
-            this.outputPaths.Add(outputPath);
+            List<string> result = new List<string>();
+            foreach (WriterState writer in this.writers.Values)
+            {
+                result.AddRange(writer.FinalizedOutputPaths);
+            }
+
+            return result;
         }
 
         public void SetOutputPathPrefix(string outputPathPrefix)
@@ -88,7 +89,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private async Task InitializeAsync(RecordContext recordContext)
         {
-            this.notificationQueue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.notificationQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
             this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
 
             await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
@@ -101,7 +101,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             string recordType = recordContext.RecordType;
             if (!this.writers.TryGetValue(recordType, out WriterState writerState))
             {
-                writerState = new WriterState(recordType, this.OutputPathPrefix, this.outContainer);
+                writerState = new WriterState(recordType, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageConnectionEnvironmentVariable, this.outContainer);
                 await writerState.InitializeAsync().ConfigureAwait(false);
                 this.writers[recordType] = writerState;
             }
@@ -170,24 +170,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             WriterState writerState = await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
-            CloudBlockBlob outputBlob = await writerState.WriteLineAsync(content).ConfigureAwait(false);
-            if (outputBlob != null)
-            {
-                await this.NotifyOutputAsync(outputBlob).ConfigureAwait(false);
-            }
-
+            await writerState.WriteLineAsync(content).ConfigureAwait(false);
             this.RegisterRecord(recordContext.RecordType);
-        }
-
-        protected async Task NotifyOutputAsync(CloudBlockBlob outputBlob)
-        {
-            string notificiationMessage = AzureHelpers.GenerateNotificationMessage(outputBlob);
-            if (this.notificationQueue != null)
-            {
-                await this.notificationQueue.AddMessageAsync(new CloudQueueMessage(notificiationMessage)).ConfigureAwait(false);
-            }
-
-            this.AddOutputPath(outputBlob.Name);
         }
 
         private void RegisterRecord(string recordType)
@@ -208,11 +192,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
             foreach (WriterState state in this.writers.Values)
             {
-                CloudBlockBlob outputBlock = state.OutputBlob;
-                if (outputBlock != null)
-                {
-                    await this.NotifyOutputAsync(outputBlock).ConfigureAwait(false);
-                }
+                await state.FinalizeAsync().ConfigureAwait(false);
             }
 
             this.initialized = false;
@@ -272,20 +252,27 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             protected long SizeInBytes { get; private set; }
             public CloudBlockBlob OutputBlob { get; private set; }
+            public List<string> FinalizedOutputPaths { get; private set; }
+            private CloudQueue notificationQueue;
 
             private readonly string recordType;
             private readonly string outputPath;
             private StreamWriter writer;
             private readonly CloudBlobContainer outContainer;
+            private readonly string notificationQueuePrefix;
+            private readonly string storageConnectionEnvironmentVariable;
 
             private int fileIndex;
             private bool initialized;
 
-            public WriterState(string recordType, string outputPath, CloudBlobContainer outContainer)
+            public WriterState(string recordType, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
             {
                 this.recordType = recordType;
                 this.outputPath = outputPath;
+                this.notificationQueuePrefix = notificationQueuePrefix;
+                this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
                 this.outContainer = outContainer;
+                this.FinalizedOutputPaths = new List<string>();
 
                 this.OutputBlob = null;
                 this.fileIndex = -1;
@@ -301,41 +288,69 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 CloudBlobStream cloudBlobStream = await this.OutputBlob.OpenWriteAsync().ConfigureAwait(false);
                 this.writer = new StreamWriter(cloudBlobStream, Encoding.UTF8);
 
+                // Initialize the notification queue only once since we keep using the same queue even for multiple files.
+                if (!this.initialized)
+                {
+                    string recordTypeSuffix = this.recordType.Split('.').Last().ToLower(); // you cannot use upper case characters in Azure queue names :(
+                    string recordTypeHash = HashUtility.ComputeSha512(this.recordType).ToLower();
+                    string queueName = $"{this.notificationQueuePrefix}-{recordTypeSuffix}-{recordTypeHash}";
+                    if (queueName.Length > 63)
+                    {
+                        // Azure queue names are limited with 63 characters. Use only the first 63 characters.
+                        queueName = queueName.Substring(0, 63);
+                    }
+                    this.notificationQueue = await AzureHelpers.GetStorageQueueAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                }
+
                 this.initialized = true;
             }
 
-            public async Task<CloudBlockBlob> WriteLineAsync(string content)
+            public async Task WriteLineAsync(string content)
             {
                 this.SizeInBytes = this.writer.BaseStream.Position;
 
-                CloudBlockBlob result = null;
                 // Check if the current file needs to be rolled over.
                 if (this.SizeInBytes > FileSizeLimit)
                 {
-                    result = await this.NewOutputAsync().ConfigureAwait(false);
+                    await this.NewOutputAsync().ConfigureAwait(false);
                 }
 
                 await this.writer.WriteLineAsync(content).ConfigureAwait(false);
-
-                return result;
             }
 
-            public async Task<CloudBlockBlob> NewOutputAsync()
+            public async Task NewOutputAsync()
             {
-                CloudBlockBlob result = null;
                 if (this.initialized)
                 {
                     this.writer.Dispose();
-                    result = this.OutputBlob;
+                    await this.NotifyFinalizedOutputAsync().ConfigureAwait(false);
                 }
 
                 await this.InitializeAsync().ConfigureAwait(false);
-                return result;
             }
 
             public void Dispose()
             {
                 this.writer.Dispose();
+            }
+
+            public async Task FinalizeAsync()
+            {
+                if (!this.initialized)
+                {
+                    return;
+                }
+
+                await this.NotifyFinalizedOutputAsync().ConfigureAwait(false);
+
+                this.initialized = false;
+            }
+
+            private async Task NotifyFinalizedOutputAsync()
+            {
+                string finalizedOutputPath = this.OutputBlob.Name;
+                this.FinalizedOutputPaths.Add(finalizedOutputPath);
+                await this.notificationQueue.AddMessageAsync(new CloudQueueMessage(finalizedOutputPath)).ConfigureAwait(false);
             }
         }
     }
