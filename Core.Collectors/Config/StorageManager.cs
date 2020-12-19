@@ -124,14 +124,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             return new AdlsBulkRecordWriter<T>(adlsClient, identifier, this.telemetryClient, functionContext, contextWriter, root: rootFolder, version);
         }
 
-        protected virtual IRecordWriter ConstructAzureBlobWriter<T>(string rootContainer,
-                                                                    string outputQueueName,
-                                                                    string identifier,
-                                                                    ITelemetryClient telemetryClient,
-                                                                    T functionContext,
-                                                                    ContextWriter<T> contextWriter,
-                                                                    string storageConnectionEnvironmentVariable,
-                                                                    string notificationQueueEnvironmentVariable) where T : FunctionContext
+        protected virtual AzureBlobRecordWriter<T> ConstructAzureBlobWriter<T>(string rootContainer,
+                                                                               string outputQueueName,
+                                                                               string identifier,
+                                                                               ITelemetryClient telemetryClient,
+                                                                               T functionContext,
+                                                                               ContextWriter<T> contextWriter,
+                                                                               string storageConnectionEnvironmentVariable,
+                                                                               string notificationQueueEnvironmentVariable) where T : FunctionContext
         {
             return new AzureBlobRecordWriter<T>(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter);
         }
