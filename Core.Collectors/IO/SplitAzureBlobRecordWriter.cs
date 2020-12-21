@@ -101,7 +101,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             string recordType = recordContext.RecordType;
             if (!this.writers.TryGetValue(recordType, out WriterState writerState))
             {
-                writerState = new WriterState(recordType, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageConnectionEnvironmentVariable, this.outContainer);
+                writerState = new WriterState(recordType, this.blobRoot, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageConnectionEnvironmentVariable, this.outContainer);
                 await writerState.InitializeAsync().ConfigureAwait(false);
                 this.writers[recordType] = writerState;
             }
@@ -253,9 +253,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             protected long SizeInBytes { get; private set; }
             public CloudBlockBlob OutputBlob { get; private set; }
             public List<string> FinalizedOutputPaths { get; private set; }
-            private CloudQueue notificationQueue;
+            private IQueue notificationQueue;
 
             private readonly string recordType;
+            private readonly string blobRoot;
             private readonly string outputPath;
             private StreamWriter writer;
             private readonly CloudBlobContainer outContainer;
@@ -264,10 +265,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
             private int fileIndex;
             private bool initialized;
+            private long recordCount;
+            private DateTime minCollectionDateUtc;
 
-            public WriterState(string recordType, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
+            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
             {
                 this.recordType = recordType;
+                this.blobRoot = blobRoot;
                 this.outputPath = outputPath;
                 this.notificationQueuePrefix = notificationQueuePrefix;
                 this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
@@ -278,6 +282,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 this.fileIndex = -1;
                 this.writer = null;
                 this.initialized = false;
+                this.recordCount = 0;
+                this.minCollectionDateUtc = DateTime.MinValue;
             }
 
             public async Task InitializeAsync()
@@ -299,10 +305,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    this.notificationQueue = await AzureHelpers.GetStorageQueueAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue queue = await AzureHelpers.GetStorageQueueAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 
                 this.initialized = true;
+                this.recordCount = 0;
+                this.minCollectionDateUtc = DateTime.UtcNow;
             }
 
             public async Task WriteLineAsync(string content)
@@ -316,6 +325,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 }
 
                 await this.writer.WriteLineAsync(content).ConfigureAwait(false);
+                this.recordCount++;
             }
 
             public async Task NewOutputAsync()
@@ -350,7 +360,17 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             {
                 string finalizedOutputPath = this.OutputBlob.Name;
                 this.FinalizedOutputPaths.Add(finalizedOutputPath);
-                await this.notificationQueue.AddMessageAsync(new CloudQueueMessage(finalizedOutputPath)).ConfigureAwait(false);
+
+                RecordWriterNotificationMessage notificationMessage = new RecordWriterNotificationMessage()
+                {
+                    BlobPath = finalizedOutputPath,
+                    ContainerName = this.blobRoot,
+                    MaxCollectionDateUtc = DateTime.UtcNow,
+                    RecordCount = this.recordCount,
+                    RecordType = this.recordType,
+                    MinCollectionDateUtc = this.minCollectionDateUtc,
+                };
+                await this.notificationQueue.PutObjectAsJsonStringAsync(notificationMessage, TimeSpan.MaxValue).ConfigureAwait(false);
             }
         }
     }
