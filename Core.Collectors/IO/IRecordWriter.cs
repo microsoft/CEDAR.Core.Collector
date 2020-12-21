@@ -16,4 +16,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         Task WriteRecordAsync(JObject record, RecordContext context);
         Task NewOutputAsync(string outputSuffix, int fileIndex = 0);
     }
+
+    public enum RecordWriterType
+    {
+        AzureDataLakeStorageV1,
+        AzureBlob,
+        SplitAzureBlob,
+    }
 }
