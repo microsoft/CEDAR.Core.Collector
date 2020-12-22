@@ -6,6 +6,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
     {
         Task InitializeAsync();
         Task CacheAsync(T tableEntity);
+        Task<bool> CacheAtomicAsync(T currentTableEntity, T newTableEntity);
         Task<T> RetrieveAsync(T tableEntity);
         Task<bool> ExistsAsync(T tableEntity);
     }

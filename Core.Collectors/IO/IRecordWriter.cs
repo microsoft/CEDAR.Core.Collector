@@ -13,6 +13,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         IEnumerable<string> OutputPaths { get; }
         void SetOutputPathPrefix(string outputPathPrefix);
         Task FinalizeAsync();
+        Task WriteLineAsync(string content);
         Task WriteRecordAsync(JObject record, RecordContext context);
         Task NewOutputAsync(string outputSuffix, int fileIndex = 0);
     }

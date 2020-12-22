@@ -60,5 +60,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.IO
             this.records.Add(Tuple.Create(record, context));
             return Task.CompletedTask;
         }
+
+        public Task WriteLineAsync(string content)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
