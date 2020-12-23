@@ -3,6 +3,7 @@
 
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
@@ -73,6 +74,62 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                     { "Operation", "CacheAsync" },
                 };
                 this.telemetryClient.TrackEvent("CachingError", properties);
+            }
+        }
+
+        public async Task<bool> CacheAtomicAsync(T currentTableEntity, T newTableEntity)
+        {
+            if (currentTableEntity == null)
+            {
+                TableOperation insertOperation = TableOperation.Insert(newTableEntity);
+                try
+                {
+                    await this.table.ExecuteAsync(insertOperation).ConfigureAwait(false);
+                    return true;
+                }
+                catch (Exception insertException) when (insertException is StorageException)
+                {
+                    StorageException insertStorageException = (StorageException)insertException;
+                    int insertStatusCode = insertStorageException.RequestInformation.HttpStatusCode;
+                    if (insertStatusCode != 409) // Ignore 409, since it (Conflict) indicates that someone else did the update before us.
+                    {
+                        Dictionary<string, string> properties = new Dictionary<string, string>()
+                        {
+                            { "ErrorMessage", insertStorageException.Message },
+                            { "ErrorReturnCode", insertStatusCode.ToString() },
+                            { "Operation", "CacheAtomicAsync" },
+                        };
+                        this.telemetryClient.TrackEvent("CachingError", properties);
+                    }
+                }
+
+                return false;
+            }
+
+            string currentETag = currentTableEntity.ETag;
+            newTableEntity.ETag = currentETag;
+            TableOperation replaceOperation = TableOperation.Replace(newTableEntity);
+            try
+            {
+                await this.table.ExecuteAsync(replaceOperation).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception replaceException) when (replaceException is StorageException)
+            {
+                StorageException replaceStorageException = (StorageException)replaceException;
+                int replaceStatusCode = replaceStorageException.RequestInformation.HttpStatusCode;
+                if (replaceStatusCode != 412) // Ignore 412, since it (Pre-condition failed) indicates that someone else did the update before us.
+                {
+                    Dictionary<string, string> properties = new Dictionary<string, string>()
+                    {
+                        { "ErrorMessage", replaceException.Message },
+                        { "ErrorReturnCode", replaceStatusCode.ToString() },
+                        { "Operation", "CacheAtomicAsync" },
+                    };
+                    this.telemetryClient.TrackEvent("CachingError", properties);
+                }
+
+                return false;
             }
         }
 

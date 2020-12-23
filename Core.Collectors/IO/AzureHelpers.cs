@@ -6,6 +6,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -57,6 +58,24 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             CloudQueue queue = queueClient.GetQueueReference(queueName);
             await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             return queue;
+        }
+
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string prefix, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            List<CloudQueue> result = new List<CloudQueue>();
+
+            CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            QueueContinuationToken continuationToken = null;
+            do
+            {
+                QueueResultSegment queueResultSegment = await queueClient.ListQueuesSegmentedAsync(prefix, continuationToken).ConfigureAwait(false);
+                continuationToken = queueResultSegment.ContinuationToken;
+
+                result.AddRange(queueResultSegment.Results);
+            } while (continuationToken != null);
+
+            return result;
         }
 
         public static async Task<CloudTable> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")

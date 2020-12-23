@@ -117,6 +117,20 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
+        public async Task WriteLineAsync(string content)
+        {
+            this.SizeInBytes = this.currentWriter.BaseStream.Position;
+
+            // Check if the current file needs to be rolled over.
+            if (this.SizeInBytes > this.fileSizeLimit)
+            {
+                this.currentFileIndex++;
+                await this.NewOutputAsync(this.currentOutputSuffix, this.currentFileIndex).ConfigureAwait(false);
+            }
+
+            await this.currentWriter.WriteLineAsync(content).ConfigureAwait(false);
+        }
+
         public async Task WriteRecordAsync(JObject record, RecordContext recordContext)
         {
             if (!this.initialized)
@@ -179,16 +193,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 return;
             }
 
-            this.SizeInBytes = this.currentWriter.BaseStream.Position;
-
-            // Check if the current file needs to be rolled over.
-            if (this.SizeInBytes > this.fileSizeLimit)
-            {
-                this.currentFileIndex++;
-                await this.NewOutputAsync(this.currentOutputSuffix, this.currentFileIndex).ConfigureAwait(false);
-            }
-
-            await this.currentWriter.WriteLineAsync(content).ConfigureAwait(false);
+            await this.WriteLineAsync(content).ConfigureAwait(false);
 
             this.RegisterRecord(recordContext.RecordType);
         }
