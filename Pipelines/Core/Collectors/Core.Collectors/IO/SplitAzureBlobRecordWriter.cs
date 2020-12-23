@@ -109,6 +109,18 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return writerState;
         }
 
+        public async Task WriteLineAsync(string content)
+        {
+            // Not supported for SplitAzureBlobRecordWriter.
+            RecordContext recordContext = new RecordContext()
+            {
+                RecordType = "None",
+            };
+
+            WriterState writerState = await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
+            await writerState.WriteLineAsync(content).ConfigureAwait(false);
+        }
+
         public async Task WriteRecordAsync(JObject record, RecordContext recordContext)
         {
             if (!this.initialized)

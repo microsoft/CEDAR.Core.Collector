@@ -68,5 +68,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Cache
 
             return null;
         }
+
+        public async Task<bool> CacheAtomicAsync(T currentTableEntity, T newTableEntity)
+        {
+            // Assume the same as CacheAsync
+            await this.CacheAsync(newTableEntity).ConfigureAwait(false);
+            return true;
+        }
     }
 }
