@@ -117,6 +117,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 RecordType = "None",
             };
 
+            if (!this.initialized)
+            {
+                await this.InitializeAsync(recordContext).ConfigureAwait(false);
+            }
+
             WriterState writerState = await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
             await writerState.WriteLineAsync(content).ConfigureAwait(false);
         }

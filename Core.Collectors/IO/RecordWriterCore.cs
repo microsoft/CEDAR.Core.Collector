@@ -119,6 +119,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         public async Task WriteLineAsync(string content)
         {
+            if (!this.initialized)
+            {
+                await this.InitializeAsync(outputSuffix: string.Empty).ConfigureAwait(false);
+            }
+
             this.SizeInBytes = this.currentWriter.BaseStream.Position;
 
             // Check if the current file needs to be rolled over.
