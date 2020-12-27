@@ -48,9 +48,9 @@ steps:
     arguments: '-c Release --no-restore'
 
 - task: ArchiveFiles@2
-  displayName: 'Archive Azure DevOps collectors'
+  displayName: 'Archive Record Output Service'
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)\Pipelines\Collectors\RecordOutputService\RecordOutputService.Functions\bin\Release\netcoreapp3.1'
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\Collectors\RecordOutputService\RecordOutputService.Functions\bin\Release\netcoreapp3.1'
     includeRootFolder: false
     archiveFile: '$(Build.ArtifactStagingDirectory)\RecordOutputService.Functions$(Build.BuildId).zip'
 
