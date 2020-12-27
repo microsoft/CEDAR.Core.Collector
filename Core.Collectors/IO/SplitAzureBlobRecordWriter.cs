@@ -314,7 +314,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 // Initialize the notification queue only once since we keep using the same queue even for multiple files.
                 if (!this.initialized)
                 {
-                    string recordTypeSuffix = this.recordType.Split('.').Last().ToLower(); // you cannot use upper case characters in Azure queue names :(
+                    string recordTypeSuffix = this.recordType.Replace("_", "").Split('.').Last().ToLower(); // you cannot use "_" (exists in GitHub webhook event types e.g., issue_comment) or upper case characters in Azure queue names :(
                     string recordTypeHash = HashUtility.ComputeSha512(this.recordType).ToLower();
                     string queueName = $"{this.notificationQueuePrefix}-{recordTypeSuffix}-{recordTypeHash}";
                     if (queueName.Length > 63)
