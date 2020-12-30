@@ -105,11 +105,19 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             if (this.initialized)
             {
                 this.currentWriter.Dispose();
-                await this.NotifyCurrentOutputAsync().ConfigureAwait(false);
-
-                string finalSuffix = $"{(string.IsNullOrWhiteSpace(outputSuffix) ? "" : $"_{outputSuffix}")}{(fileIndex == 0 ? "" : $"_{fileIndex}")}";
-                this.currentWriter = await this.NewStreamWriterAsync(finalSuffix).ConfigureAwait(false);
-                this.currentOutputSuffix = outputSuffix;
+                try
+                {
+                    // There is a chance that NotifyCurrentOutputAsync throws. Even if this is the case, we want to ensure that a new writer is initialized (using NewStreamWriterAsync(..)) so that the recordWriter
+                    // is still in a 'valid' state (e.g., the client can call WriteLineAsync(..)). Without this, since the currentWriter is disposed on the line before, the recordWriter starts throwing an ObjectDisposedException
+                    // with message: "Cannot access a closed file."
+                    await this.NotifyCurrentOutputAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    string finalSuffix = $"{(string.IsNullOrWhiteSpace(outputSuffix) ? "" : $"_{outputSuffix}")}{(fileIndex == 0 ? "" : $"_{fileIndex}")}";
+                    this.currentWriter = await this.NewStreamWriterAsync(finalSuffix).ConfigureAwait(false);
+                    this.currentOutputSuffix = outputSuffix;
+                }
             }
             else
             {
