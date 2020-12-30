@@ -117,6 +117,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     { "Duration", uploadDuration.ToString() },
                     { "Retried", retried.ToString() },
                     { "SizeBytes", this.SizeInBytes.ToString() },
+                    { "LocalPath", finalOutputPath },
                 };
                 this.TelemetryClient.TrackEvent("AdlsUploadStats", properties);
             }
