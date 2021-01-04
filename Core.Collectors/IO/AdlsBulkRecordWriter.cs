@@ -71,6 +71,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             DateTime dateTimeSignature = DateTime.UtcNow + MaxUploadDelay;
             string fileName = $"{this.GetOutputPathPrefix(dateTimeSignature)}{this.currentSuffix}.json";
             string finalOutputPath = Path.Combine(this.localRoot, fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(finalOutputPath));
 
             // Rename local file.
             try
