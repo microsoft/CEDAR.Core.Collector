@@ -18,6 +18,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         private TelemetryClient telemetryClient;
         private readonly Dictionary<string, Dictionary<string, string>> telemetryEvents;
         protected readonly JObject config;
+        private readonly JObject config;
         private readonly JToken apiDomainToken;
         private readonly Dictionary<string, JToken> authenticationTokenMap;
         private readonly Dictionary<string, JArray> recordWriterTokensMap;
