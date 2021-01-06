@@ -18,7 +18,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         private TelemetryClient telemetryClient;
         private readonly Dictionary<string, Dictionary<string, string>> telemetryEvents;
         private readonly JObject config;
-        private readonly Dictionary<string, JToken> apiDomainTokenMap;
+        private readonly JToken apiDomainToken;
         private readonly Dictionary<string, JToken> authenticationTokenMap;
         private readonly Dictionary<string, JArray> recordWriterTokensMap;
         private readonly bool settingsFound;
@@ -27,7 +27,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
 
         public ConfigManager(string jsonString, IConfigValueResolver configResolver = null)
         {
-            this.apiDomainTokenMap = new Dictionary<string, JToken>();
             this.authenticationTokenMap = new Dictionary<string, JToken>();
             this.recordWriterTokensMap = new Dictionary<string, JArray>();
             this.telemetryEvents = new Dictionary<string, Dictionary<string, string>>();
@@ -41,6 +40,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             }
 
             this.config = JObject.Parse(jsonString);
+            this.apiDomainToken = config.SelectToken("ApiDomain");
             JToken defaultAuth = config.SelectToken("Authentication");
             this.authenticationTokenMap.Add(DefaultKey, defaultAuth);
             try
@@ -81,9 +81,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                     this.recordWriterTokensMap.Add(collectorType, collectorStorageToken);
                 }
             }
-
-            JToken apiDomainToken = config.SelectToken("ApiDomain");
-            this.apiDomainTokenMap.Add(DefaultKey, apiDomainToken);
         }
 
         protected void AddTelemetryEvent(string name, Dictionary<string, string> properties)
@@ -161,28 +158,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             return authenticationToken;
         }
 
-        public JToken GetApiDomainToken()
-        {
-            ValidateSettingsExist();
-
-            if (!this.apiDomainTokenMap.TryGetValue(DefaultKey, out JToken apiDomainToken))
-            {
-                apiDomainToken = this.apiDomainTokenMap[DefaultKey];
-            }
-            return apiDomainToken;
-        }
-
         public string GetApiDomain()
         {
+            ValidateSettingsExist();
             string apiDomain = string.Empty;
-            JToken apiDomainToken = this.GetApiDomainToken();
             try
             {
-                apiDomain = apiDomainToken.ToString();
+                apiDomain = this.apiDomainToken.Value<string>();
             }
             catch (Exception)
             {
-                throw new FatalTerminalException($"Invalid URI: The hostname could not be parsed for API domain {apiDomainToken}");
+                throw new FatalTerminalException($"Invalid URI: The hostname could not be parsed for API domain {apiDomainToken}. The API domain must be provided in Settings.json under the github-settings Azure Blob.");
             }
             return apiDomain;
         }
