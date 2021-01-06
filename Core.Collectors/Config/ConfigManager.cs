@@ -168,7 +168,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             }
             catch (Exception)
             {
-                throw new FatalTerminalException($"Invalid URI: The hostname could not be parsed for API domain {apiDomainToken}. The API domain must be provided in Settings.json under the github-settings Azure Blob.");
+                throw new FatalTerminalException($"Invalid URI: The hostname could not be parsed for API domain {apiDomainToken}. The API domain must be provided in Settings.json.");
             }
             return apiDomain;
         }
