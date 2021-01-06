@@ -9,10 +9,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
     [TestClass]
     public class ConfigManagerTests
     {
-        [TestMethod]
-        public void GetDefaultAuthentication()
-        {
+        private ConfigManager configManager;
 
+        [TestInitialize]
+        public void Setup()
+        {
             string jsonInput = @"
             {
                 'Authentication' : {
@@ -22,11 +23,22 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
                 },
                 'Collectors' : {
                     'Main' : {}   
-                }
+                },
+                'ApiDomain':  'api.github.com'
             }";
 
-            ConfigManager configManager = new ConfigManager(jsonInput);
-            Assert.IsNotNull(configManager.GetAuthentication("Main"));
+            this.configManager = new ConfigManager(jsonInput);
+        }
+            [TestMethod]
+        public void GetDefaultAuthentication()
+        {
+            Assert.IsNotNull(this.configManager.GetAuthentication("Main"));
+        }
+
+        [TestMethod]
+        public void GetApiDomain()
+        {
+            Assert.AreEqual("api.github.com", configManager.GetApiDomain());
         }
     }
 }
