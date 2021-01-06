@@ -17,7 +17,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
 
         private TelemetryClient telemetryClient;
         private readonly Dictionary<string, Dictionary<string, string>> telemetryEvents;
-        private readonly JObject config;
+        protected readonly JObject config;
         private readonly JToken apiDomainToken;
         private readonly Dictionary<string, JToken> authenticationTokenMap;
         private readonly Dictionary<string, JArray> recordWriterTokensMap;
@@ -40,7 +40,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             }
 
             this.config = JObject.Parse(jsonString);
-            this.apiDomainToken = config.SelectToken("ApiDomain");
             JToken defaultAuth = config.SelectToken("Authentication");
             this.authenticationTokenMap.Add(DefaultKey, defaultAuth);
             try
@@ -95,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             return this.config.SelectToken(jsonPath);
         }
 
-        private void ValidateSettingsExist()
+        protected void ValidateSettingsExist()
         {
             if (!this.settingsFound)
             {
@@ -156,21 +155,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 authenticationToken = this.authenticationTokenMap[DefaultKey];
             }
             return authenticationToken;
-        }
-
-        public string GetApiDomain()
-        {
-            ValidateSettingsExist();
-            string apiDomain = string.Empty;
-            try
-            {
-                apiDomain = this.apiDomainToken.Value<string>();
-            }
-            catch (Exception)
-            {
-                throw new FatalTerminalException($"Invalid URI: The hostname could not be parsed for API domain {apiDomainToken}. The API domain must be provided in Settings.json.");
-            }
-            return apiDomain;
         }
 
         public StorageManager GetStorageManager(string collectorType, ITelemetryClient telemetryClient)
