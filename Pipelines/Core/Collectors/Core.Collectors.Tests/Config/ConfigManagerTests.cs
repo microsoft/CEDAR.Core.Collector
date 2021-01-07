@@ -29,16 +29,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
 
             this.configManager = new ConfigManager(jsonInput);
         }
-            [TestMethod]
+
+        [TestMethod]
         public void GetDefaultAuthentication()
         {
             Assert.IsNotNull(this.configManager.GetAuthentication("Main"));
-        }
-
-        [TestMethod]
-        public void GetApiDomain()
-        {
-            Assert.AreEqual("api.github.com", configManager.GetApiDomain());
         }
     }
 }
