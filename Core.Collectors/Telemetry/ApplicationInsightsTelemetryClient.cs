@@ -118,7 +118,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Telemetry
 
             dependencyTelemetry.Properties.Add("RequestBody", requestBody);
             dependencyTelemetry.Properties.Add("ETag", eTag);
-            dependencyTelemetry.Properties.Add("Identity", identity);
+
+            string identityToTrack = identity;
+            bool guidIdentity = Guid.TryParse(identityToTrack, out Guid _);
+            if (guidIdentity)
+            {
+                identityToTrack = identityToTrack.Substring(0, 4); // For security reasons, if the identity is a GUID, only capture the first 4 characters in the telemetry.
+            }
+
+            dependencyTelemetry.Properties.Add("Identity", identityToTrack);
             foreach (KeyValuePair<string, string> property in this.GetContextProperties())
             {
                 dependencyTelemetry.Properties.Add(property.Key, property.Value);
