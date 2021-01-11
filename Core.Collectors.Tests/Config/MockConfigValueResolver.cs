@@ -11,14 +11,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
     {
         private readonly Dictionary<string, string> configMap;
 
-        public MockConfigValueResolver(string configValue)
-        {
-            this.configMap = new Dictionary<string, string>()
-            {
-                { "PersonalAccessToken", configValue },
-            };
-        }
-
         public MockConfigValueResolver(Dictionary<string, string> configMap)
         {
             this.configMap = configMap;
