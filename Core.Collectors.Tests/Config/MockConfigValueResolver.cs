@@ -15,7 +15,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
         {
             this.configMap = new Dictionary<string, string>()
             {
-                { "ConfigValue", configValue },
+                { "PersonalAccessToken", configValue },
             };
         }
 
