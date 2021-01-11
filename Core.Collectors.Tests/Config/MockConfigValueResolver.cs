@@ -2,21 +2,36 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Config;
+using System;
+using System.Collections.Generic;
 
 namespace Microsoft.CloudMine.Core.Collectors.Tests.Config
 {
     public class MockConfigValueResolver : IConfigValueResolver
     {
-        private readonly string configValue;
+        private readonly Dictionary<string, string> configMap;
 
         public MockConfigValueResolver(string configValue)
         {
-            this.configValue = configValue;
+            this.configMap = new Dictionary<string, string>()
+            {
+                { "ConfigValue", configValue },
+            };
+        }
+
+        public MockConfigValueResolver(Dictionary<string, string> configMap)
+        {
+            this.configMap = configMap;
         }
 
         public string ResolveConfigValue(string configIdentifier)
         {
-            return this.configValue;
+            if (!this.configMap.TryGetValue(configIdentifier, out string result))
+            {
+                throw new InvalidOperationException($"MockConfigValueResolver does not have a value for '{configIdentifier}'.");
+            }
+
+            return result;
         }
     }
 }
