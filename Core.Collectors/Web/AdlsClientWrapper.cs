@@ -24,6 +24,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public AdlsClient AdlsClient { get; private set; }
 
+        public AdlsClientWrapper()
+        {
+
+        }
+
         public AdlsClientWrapper(string settings)
         {
             JObject config = JObject.Parse(settings);
