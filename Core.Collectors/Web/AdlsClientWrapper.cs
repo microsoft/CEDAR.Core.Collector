@@ -26,7 +26,23 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public AdlsClientWrapper()
         {
+            string clientId = Environment.GetEnvironmentVariable("AdlsIngestionApplicationId");
+            string secretKey = Environment.GetEnvironmentVariable("AdlsIngestionApplicationSecret");
 
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secretKey))
+            {
+                // Don't fail loading the function app environment if these variables are not provided. Instead don't initialize the ADLS client.
+                // This way, we permit functions that don't depend on the ADLS client to still run without configuring the ADLS client.
+                // Once the function loads, we will also log the fact that ADLS client is not initialized separately.
+                return;
+            }
+
+            ActiveDirectoryServiceSettings serviceSettings = ActiveDirectoryServiceSettings.Azure;
+            serviceSettings.TokenAudience = AdlTokenAudience;
+            ServiceClientCredentials adlCreds = ApplicationTokenProvider.LoginSilentAsync(TenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
+
+            // Marcel: ProcCount * 8 is usually the recommended number of threads to be used without deprecation of performance to to overscheduling and preemption. It supposed to account for usage and IO completion waits.
+            this.AdlsClient = AdlsClient.CreateClient(AdlsAccount, adlCreds, Environment.ProcessorCount * 8);
         }
 
         public AdlsClientWrapper(string settings)
