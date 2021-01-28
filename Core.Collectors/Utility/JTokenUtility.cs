@@ -15,8 +15,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
 
         private static bool IsEmpty(JToken token)
         {
-            return IsNull(token) ||
-                   (token.Type == JTokenType.Array && !token.HasValues) ||
+            return (token.Type == JTokenType.Array && !token.HasValues) ||
                    (token.Type == JTokenType.Object && !token.HasValues) ||
                    (token.Type == JTokenType.String && token.ToString() == string.Empty);
         }
