@@ -27,14 +27,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
 
         // This method is functionally the same as string.IsNullOrEmpty(), but it works with a JToken contains any type. 
         // This reduces the number of checks you need to make from 4 to 1 if you want to determine if the value of a JToken containing an unknown type is null or empty.
-        public static bool IsNullOrEmpty(JToken token)
+        public static bool IsNullOrEmpty(this JToken token)
         {
             return IsNull(token) || IsEmpty(token);
         }
 
         // This method is functionally the same as string.IsNullOrWhiteSpace(), but it works with a JToken that contains any type.
         // This reduces the number of checks you need to make from 5 to 1 if you want to determine if the value of a JToken containing an unknown type is null, empty, or whitespace.
-        public static bool IsNullOrWhiteSpace(JToken token)
+        public static bool IsNullOrWhiteSpace(this JToken token)
         {
             return IsNull(token) || IsEmpty(token) || IsWhiteSpace(token);
         }

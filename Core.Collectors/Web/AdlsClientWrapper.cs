@@ -34,7 +34,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             JObject config = JObject.Parse(settings);
             JToken clientIdToken = config.SelectToken("AdlsIngestionApplicationId");
             JToken secretKeyEnvironmentVariableToken = config.SelectToken("AdlsIngestionApplicationSecretEnvironmentVariable");
-            if (JTokenUtility.IsNullOrWhiteSpace(clientIdToken) || JTokenUtility.IsNullOrWhiteSpace(secretKeyEnvironmentVariableToken))
+            if (clientIdToken.IsNullOrWhiteSpace() || secretKeyEnvironmentVariableToken.IsNullOrWhiteSpace())
             {
                 // Don't fail loading the function app environment if these variables are not provided. Instead don't initialize the ADLS client.
                 // This way, we permit functions that don't depend on the ADLS client to still run without configuring the ADLS client.
