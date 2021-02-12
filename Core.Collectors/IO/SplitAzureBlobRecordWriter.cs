@@ -219,7 +219,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             if (!this.initialized)
             {
-                TelemetryClient.LogWarning("RecordWriter.Dispose was called before RecordWriter was initialized. Ignoring the call.");
                 return;
             }
 
