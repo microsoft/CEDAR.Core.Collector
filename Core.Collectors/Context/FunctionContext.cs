@@ -25,5 +25,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Context
         /// For functions that are running on a schedule, represents the time the collection should have started.
         /// </summary>
         public DateTime SliceDate { get; set; } = DateTime.MinValue;
+
+        /// <summary>
+        /// Number of times the messages was dequeued for queue-based Azure Functions.
+        /// </summary>
+        public int DequeueCount { get; set; } = 0;
     }
 }
