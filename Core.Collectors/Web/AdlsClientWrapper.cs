@@ -20,8 +20,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
     public class AdlsClientWrapper : IAdlsClient
     {
         public static readonly Uri AdlTokenAudience = new Uri(@"https://datalake.azure.net/");
-        public const string AdlsAccount = "1es-private-data-c14.azuredatalakestore.net";
-        public const string TenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47"; // Microsoft tenant
 
         public AdlsClient AdlsClient { get; private set; }
 
@@ -29,6 +27,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         // The old API will be deprecated soon, but to protect our jobs from failing, we need to support both the old API and new API.
         public AdlsClientWrapper()
         {
+            string adlsAccount = Environment.GetEnvironmentVariable("AdlsAccount");
+            if (string.IsNullOrWhiteSpace(adlsAccount))
+            {
+                adlsAccount = "1es-private-data-c14.azuredatalakestore.net";
+            }
+
+            string adlsTenantId = Environment.GetEnvironmentVariable("AdlsTenantId");
+            if (string.IsNullOrWhiteSpace(adlsTenantId))
+            {
+                adlsTenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+            }
+
             string clientId = Environment.GetEnvironmentVariable("AdlsIngestionApplicationId");
             string secretKey = Environment.GetEnvironmentVariable("AdlsIngestionApplicationSecret");
 
@@ -42,10 +52,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
             ActiveDirectoryServiceSettings serviceSettings = ActiveDirectoryServiceSettings.Azure;
             serviceSettings.TokenAudience = AdlTokenAudience;
-            ServiceClientCredentials adlCreds = ApplicationTokenProvider.LoginSilentAsync(TenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
+            ServiceClientCredentials adlCreds = ApplicationTokenProvider.LoginSilentAsync(adlsTenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
 
             // Marcel: ProcCount * 8 is usually the recommended number of threads to be used without deprecation of performance to to overscheduling and preemption. It supposed to account for usage and IO completion waits.
-            this.AdlsClient = AdlsClient.CreateClient(AdlsAccount, adlCreds, Environment.ProcessorCount * 8);
+            this.AdlsClient = AdlsClient.CreateClient(adlsAccount, adlCreds, Environment.ProcessorCount * 8);
         }
 
         public AdlsClientWrapper(string settings)

@@ -32,7 +32,6 @@ steps:
     projects: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
     feedsToUse: config
     nugetConfigPath: '$(System.DefaultWorkingDirectory)\CloudMine\Pipelines\Collectors\NuGet.config'
-    externalFeedCredentials: 'Domino Nuget (CloudBuild VSO account), MerlinBot MSblox'
     verbosityRestore: Minimal
 
 - task: UseDotNet@2
