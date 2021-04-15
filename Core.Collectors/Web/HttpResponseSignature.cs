@@ -10,7 +10,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public class HttpResponseSignature
     {
-        public HttpStatusCode StatusCode { get; }
+        public HttpStatusCode statusCode;
+        public HttpStatusCode StatusCode 
+        {
+            get
+            {
+                return this.statusCode;
+            }
+            set
+            {
+                this.statusCode = value;
+            }
+        }
         public Regex ResponseMessageRegex { get; }
         public string ResponseMessagePath { get; }
         public Func<JObject, bool> Matcher { get; }
