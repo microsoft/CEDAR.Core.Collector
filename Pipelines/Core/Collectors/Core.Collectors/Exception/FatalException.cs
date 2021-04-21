@@ -11,5 +11,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Error
             : base(message)
         {
         }
+
+        public FatalException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
     }
 }
