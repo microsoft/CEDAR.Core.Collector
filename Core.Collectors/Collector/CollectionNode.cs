@@ -49,7 +49,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         /// </summary>
         public Func<JObject, bool> HaltCollection { get; set; } = record => false;
 
+        /// <summary>
+        /// Provides a way to allow-list non-success HTTP responses.
+        /// </summary>
         public List<HttpResponseSignature> AllowlistedResponses = new List<HttpResponseSignature>();
+
+        /// <summary>
+        /// Provides a way to allow-list HTTP exceptions.
+        /// </summary>
+        public List<HttpExceptionSignature> AllowlistedExceptions = new List<HttpExceptionSignature>();
 
         public abstract object Clone();
     }
