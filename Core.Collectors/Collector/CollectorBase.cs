@@ -64,9 +64,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 counter++;
                 HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
 
-                if (response.StatusCode == HttpStatusCode.NoContent)
+                // response would be null if there was an exception while getting the response and the exception is allow-listed.
+                if (response == null || response.StatusCode == HttpStatusCode.NoContent)
                 {
-                    // Responses with empty bodies cannot be deserialized and are not expected to have continuations
+                    // Responses with empty bodies and responses with allow-listed exceptions cannot be deserialized and are not expected to have continuations
                     break;
                 }
 
