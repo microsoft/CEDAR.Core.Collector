@@ -21,13 +21,53 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
             this.tasks.Add(task);
         }
 
-        public async Task WaitIfNeededAsync()
+        public Task WaitIfNeededAsync()
         {
             if (tasks.Count >= maxBatchSize)
             {
-                await Task.WhenAll(tasks).ConfigureAwait(false);
-                tasks.Clear();
+                return WaitAsync();
             }
+
+            return Task.CompletedTask;
+        }
+
+        public async Task WaitAsync()
+        {
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+            tasks.Clear();
+        }
+    }
+
+    public class AsyncTaskExecutor<T>
+    {
+        private readonly int maxBatchSize;
+        private readonly List<Task<T>> tasks;
+
+        public AsyncTaskExecutor(int maxBatchSize)
+        {
+            this.maxBatchSize = maxBatchSize;
+        }
+
+        public void Add(Task<T> task)
+        {
+            this.tasks.Add(task);
+        }
+
+        public Task<T[]> WaitIfNeededAsync()
+        {
+            if (tasks.Count >= maxBatchSize)
+            {
+                return WaitAsync();
+            }
+
+            return Task.FromResult(new T[0]);
+        }
+
+        public async Task<T[]> WaitAsync()
+        {
+            T[] result = await Task.WhenAll(tasks).ConfigureAwait(false);
+            tasks.Clear();
+            return result;
         }
     }
 }
