@@ -14,6 +14,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
         public AsyncTaskExecutor(int maxBatchSize)
         {
             this.maxBatchSize = maxBatchSize;
+            tasks = new List<Task>();
         }
 
         public void Add(Task task)
@@ -46,6 +47,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
         public AsyncTaskExecutor(int maxBatchSize)
         {
             this.maxBatchSize = maxBatchSize;
+            this.tasks = new List<Task<T>>();
         }
 
         public void Add(Task<T> task)
