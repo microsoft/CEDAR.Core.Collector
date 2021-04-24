@@ -106,6 +106,18 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     status = this.adlsClient.BulkUpload(this.localRoot, adlsDirectory, shouldOverwrite: IfExists.Fail);
                     if (status.EntriesFailed.Count != 0)
                     {
+                        foreach (SingleEntryTransferStatus failedTransferStatus in status.EntriesFailed)
+                        {
+                            Dictionary<string, string> transferStatusProperties = new Dictionary<string, string>()
+                            {
+                                { "EntryName", failedTransferStatus.EntryName },
+                                { "EntrySize", failedTransferStatus.EntrySize.ToString() },
+                                { "TransferErrors", failedTransferStatus.Errors },
+                                { "TransferStatus", failedTransferStatus.Status.ToString() },
+                                { "TransferType", failedTransferStatus.Type.ToString() },
+                            };
+                            this.TelemetryClient.TrackEvent("FailedTransferStatus", transferStatusProperties);
+                        }
                         throw new FatalException($"Cannot bulk upload '{finalOutputPath}'.");
                     }
                 }
