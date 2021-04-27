@@ -54,7 +54,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             {
                 await this.collector.ProcessAsync(collectionNode).ConfigureAwait(false);
                 progressRecord.Succeeded = true;
-                await this.progressCache.CacheAsync(progressRecord).ConfigureAwait(false);
+                await this.CacheAsync(progressRecord).ConfigureAwait(false);
                 return true;
             }
             catch (Exception exception)
@@ -62,12 +62,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 this.Exception = exception;
                 this.exceptions.Add(exception);
                 this.telemetryClient.TrackException(exception, $"Failed to process and cache endpoint '{collectionNode.ApiName}'.");
-                await this.progressCache.CacheAsync(progressRecord).ConfigureAwait(false);
+                await this.CacheAsync(progressRecord).ConfigureAwait(false);
                 return false;
             }
         }
 
-        public void Finalize()
+        public virtual Task CacheAsync(TEndpointProgressTableEntity progressRecord)
+        {
+            return this.progressCache.CacheAsync(progressRecord);
+        }
+
+        public void FinalizeCollection()
         {
             if (this.exceptions.Count == 0)
             {
