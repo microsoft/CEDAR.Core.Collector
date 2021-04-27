@@ -67,7 +67,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
         }
 
-        public void FinalizeCollection()
+        public void Finalize()
         {
             if (this.exceptions.Count == 0)
             {
