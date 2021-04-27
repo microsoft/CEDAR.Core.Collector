@@ -28,6 +28,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
         }
 
+        public AzureTableCache(ITelemetryClient telemetryClient, CloudTable table)
+        {
+            this.telemetryClient = telemetryClient;
+            this.table = table;
+            this.initialized = true;
+            this.name = table.Name;
+        }
+
         public async Task InitializeAsync()
         {
             if (this.initialized)
@@ -36,7 +44,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return;
             }
 
-            this.table = await AzureHelpers.GetStorageTableAsync(name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.table = await AzureHelpers.GetStorageTableAsync(this.name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
 
             this.initialized = true;
         }
