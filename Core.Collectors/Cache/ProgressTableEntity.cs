@@ -29,8 +29,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         public ProgressTableEntity(DateTime startDateUtc, string identifierPrefix, string progressIdentifier, TimeSpan collectionFrequency, string sessionId, bool succeeded)
         {
             DateTime endDateUtc = startDateUtc.Add(collectionFrequency);
-            this.PartitionKey = $"{startDateUtc:O}_{endDateUtc:O}";
-            this.RowKey = $"{identifierPrefix}_{progressIdentifier}";
+            this.PartitionKey = GetPartitionKey(startDateUtc, collectionFrequency);
+            this.RowKey = GetRowKey(identifierPrefix, progressIdentifier);
 
             this.StartDateUtc = startDateUtc;
             this.EndDateUtc = endDateUtc;
@@ -46,6 +46,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.AddContext("CollectionFrequency", this.CollectionFrequency.ToString());
             this.AddContext("SessionId", this.SessionId);
             this.AddContext("Succeeded", this.Succeeded.ToString());
+        }
+
+        public static string GetPartitionKey(DateTime startDateUtc, TimeSpan collectionFrequency)
+        {
+            DateTime endDateUtc = startDateUtc.Add(collectionFrequency);
+            return $"{startDateUtc:O}_{endDateUtc:O}";
+        }
+
+        public static string GetRowKey(string identifierPrefix, string progressIdentifier)
+        {
+            return $"{identifierPrefix}_{progressIdentifier}";
         }
     }
 }
