@@ -15,6 +15,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private readonly CollectorBase<TCollectionNode> collector;
         private readonly ICache<TEndpointProgressTableEntity> progressCache;
         private readonly ITelemetryClient telemetryClient;
+        private readonly List<Exception> exceptions;
 
         public Exception Exception { get; private set; }
 
@@ -23,6 +24,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             this.collector = collector;
             this.progressCache = progressCache;
             this.telemetryClient = telemetryClient;
+            this.exceptions = new List<Exception>();
         }
 
         public async Task<bool> ProcessAndCacheAsync(TCollectionNode collectionNode, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
@@ -58,10 +60,21 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             catch (Exception exception)
             {
                 this.Exception = exception;
+                this.exceptions.Add(exception);
                 this.telemetryClient.TrackException(exception, $"Failed to process and cache endpoint '{collectionNode.ApiName}'.");
                 await this.progressCache.CacheAsync(progressRecord).ConfigureAwait(false);
                 return false;
             }
+        }
+
+        public void Finalize()
+        {
+            if (this.exceptions.Count == 0)
+            {
+                return;
+            }
+
+            throw new AggregateException(this.exceptions);
         }
     }
 }
