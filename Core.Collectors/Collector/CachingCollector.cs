@@ -13,21 +13,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                                                                                           where TEndpointProgressTableEntity : ProgressTableEntity
     {
         private readonly CollectorBase<TCollectionNode> collector;
-        private readonly ICache<TEndpointProgressTableEntity> progressCache;
         private readonly ITelemetryClient telemetryClient;
         private readonly List<Exception> exceptions;
 
         public Exception Exception { get; private set; }
 
-        public CachingCollector(CollectorBase<TCollectionNode> collector, ICache<TEndpointProgressTableEntity> progressCache, ITelemetryClient telemetryClient)
-        {
-            this.collector = collector;
-            this.progressCache = progressCache;
-            this.telemetryClient = telemetryClient;
-            this.exceptions = new List<Exception>();
-        }
-
-        // To be used later on.
         public CachingCollector(CollectorBase<TCollectionNode> collector, ITelemetryClient telemetryClient)
         {
             this.collector = collector;
@@ -75,15 +65,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
         }
 
-        protected virtual Task<TEndpointProgressTableEntity> RetrieveAsync(TEndpointProgressTableEntity progressRecord)
-        {
-            return this.progressCache.RetrieveAsync(progressRecord);
-        }
+        protected abstract Task<TEndpointProgressTableEntity> RetrieveAsync(TEndpointProgressTableEntity progressRecord);
 
-        protected virtual Task CacheAsync(TEndpointProgressTableEntity progressRecord)
-        {
-            return this.progressCache.CacheAsync(progressRecord);
-        }
+        protected abstract Task CacheAsync(TEndpointProgressTableEntity progressRecord);
 
         public void FinalizeCollection()
         {
