@@ -26,6 +26,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         protected string OrganizationId { get; private set; }
         protected string OrganizationName { get; private set; }
 
+        private TimeSpan cacheInvalidationFrequency;
+        private RateLimitTableEntity cachedResult;
+        private DateTime cacheDateUtc;
+
         static RateLimiter()
         {
             string rateLimitOverride = Environment.GetEnvironmentVariable("RateLimitOverride");
@@ -37,12 +41,26 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                            ICache<RateLimitTableEntity> rateLimiterCache,
                            ITelemetryClient telemetryClient,
                            bool expectRateLimitingHeaders)
+            : this(organizationId, organizationName, rateLimiterCache, telemetryClient, expectRateLimitingHeaders, cacheInvalidationFrequency: TimeSpan.FromTicks(0))
+        {
+        }
+
+        public RateLimiter(string organizationId,
+                           string organizationName,
+                           ICache<RateLimitTableEntity> rateLimiterCache,
+                           ITelemetryClient telemetryClient,
+                           bool expectRateLimitingHeaders,
+                           TimeSpan cacheInvalidationFrequency)
         {
             this.OrganizationId = organizationId;
             this.OrganizationName = organizationName;
             this.rateLimiterCache = rateLimiterCache;
             this.TelemetryClient = telemetryClient;
             this.expectRateLimitingHeaders = expectRateLimitingHeaders;
+            this.cacheInvalidationFrequency = cacheInvalidationFrequency;
+
+            this.cachedResult = null;
+            this.cacheDateUtc = DateTime.MinValue;
         }
 
         public async Task UpdateRetryAfterAsync(string identity, string requestUrl, HttpResponseMessage response)
@@ -78,7 +96,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             rateLimitLimit = rateLimitLimit == long.MinValue ? existingRecord.RateLimitLimit : rateLimitLimit;
             rateLimitResetDate = rateLimitResetDate == null ? existingRecord.RateLimitReset : rateLimitResetDate;
 
-            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate)).ConfigureAwait(false);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate);
+            await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
+            this.cacheDateUtc = DateTime.UtcNow;
         }
 
         public async Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response)
@@ -152,13 +172,19 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public async Task WaitIfNeededAsync(IAuthentication authentication)
         {
-            RateLimitTableEntity tableEntity = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
-            if (tableEntity == null)
+            TimeSpan elapsedSinceLastLookup = DateTime.UtcNow - this.cacheDateUtc;
+            if (this.cachedResult == null || elapsedSinceLastLookup >= cacheInvalidationFrequency)
+            {
+                this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
+                this.cacheDateUtc = DateTime.UtcNow;
+            }
+
+            if (this.cachedResult == null)
             {
                 return;
             }
 
-            await WaitIfNeededAsync(authentication, tableEntity).ConfigureAwait(false);
+            await WaitIfNeededAsync(authentication, this.cachedResult).ConfigureAwait(false);
         }
 
         protected abstract Task WaitIfNeededAsync(IAuthentication authentication, RateLimitTableEntity tableEntity);
