@@ -14,6 +14,22 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public static class AzureHelpers
     {
+        private static readonly TimeSpan CloudResourcesInitializitonFrequency = TimeSpan.FromMinutes(10);
+        private static Dictionary<string, CachedCloudQueue> CloudQueues = new Dictionary<string, CachedCloudQueue>();
+        private static readonly System.Threading.SemaphoreSlim CloudResourceLock = new System.Threading.SemaphoreSlim(1, 1);
+
+        public class CachedCloudQueue
+        {
+            public CloudQueue CloudQueue { get; }
+            public DateTime LastInitializationDateUtc { get; }
+
+            public CachedCloudQueue(CloudQueue cloudQueue, DateTime lastInitializationDateUtc)
+            {
+                this.CloudQueue = cloudQueue;
+                this.LastInitializationDateUtc = lastInitializationDateUtc;
+            }
+        }
+
         private static CloudStorageAccount GetStorageAccount(string storageConnectionEnvironmentVariable)
         {
             string stagingBlobConnectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
@@ -49,6 +65,27 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             CloudBlobContainer storageContainer = GetBlobContainer(container, storageConnectionEnvironmentVariable);
             await storageContainer.CreateIfNotExistsAsync().ConfigureAwait(false);
             return storageContainer;
+        }
+
+        public static async Task<CloudQueue> GetStorageQueueCachedAsync(string queueName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            await CloudResourceLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                string key = $"{queueName}:{storageConnectionEnvironmentVariable}";
+                if (!CloudQueues.TryGetValue(key, out CachedCloudQueue cachedCloudQueue) || (DateTime.UtcNow - cachedCloudQueue.LastInitializationDateUtc) >= CloudResourcesInitializitonFrequency)
+                {
+                    CloudQueue cloudQueue = await GetStorageQueueAsync(queueName, storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    cachedCloudQueue = new CachedCloudQueue(cloudQueue, DateTime.UtcNow);
+                    CloudQueues[key] = cachedCloudQueue;
+                }
+
+                return cachedCloudQueue.CloudQueue;
+            }
+            finally
+            {
+                CloudResourceLock.Release();
+            }
         }
 
         public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
