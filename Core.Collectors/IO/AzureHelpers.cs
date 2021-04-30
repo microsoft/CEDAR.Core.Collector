@@ -88,7 +88,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageConnectionEnvironmentVariable)
+        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
