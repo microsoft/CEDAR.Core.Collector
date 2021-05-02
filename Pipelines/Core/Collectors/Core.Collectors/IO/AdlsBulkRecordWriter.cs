@@ -161,5 +161,25 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
             return Task.CompletedTask;
         }
+
+        protected override void DisposeInternal()
+        {
+            try
+            {
+                Directory.Delete(this.localRoot, true);
+            }
+            catch (Exception)
+            {
+                // Retry once, just in case.
+                try
+                {
+                    Directory.Delete(this.localRoot, true);
+                }
+                catch (Exception exception)
+                {
+                    this.TelemetryClient.TrackException(exception, "Cannot delete session root.");
+                }
+            }
+        }
     }
 }
