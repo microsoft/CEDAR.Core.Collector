@@ -104,7 +104,22 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         {
             ActiveDirectoryServiceSettings serviceSettings = ActiveDirectoryServiceSettings.Azure;
             serviceSettings.TokenAudience = AdlTokenAudience;
-            ServiceClientCredentials adlCreds = ApplicationTokenProvider.LoginSilentAsync(adlsTenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
+
+            ServiceClientCredentials adlCreds;
+            try
+            {
+                adlCreds = ApplicationTokenProvider.LoginSilentAsync(adlsTenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
+            }
+            catch (Exception exception)
+            {
+                string clientIdPrefix = clientId;
+                if (Guid.TryParse(clientId, out Guid _))
+                {
+                    clientIdPrefix = clientId.Substring(0, 4);
+                }
+
+                throw new AggregateException($"Cannot get credentials for ADLS client. ADLSTenantId = {adlsTenantId}, ClientIdPrefix = {clientIdPrefix}, ADLSAccount = {adlsAccount}", exception);
+            }
 
             // Marcel: ProcCount * 8 is usually the recommended number of threads to be used without deprecation of performance to to overscheduling and preemption. It supposed to account for usage and IO completion waits.
             this.AdlsClient = AdlsClient.CreateClient(adlsAccount, adlCreds, Environment.ProcessorCount * 8);
