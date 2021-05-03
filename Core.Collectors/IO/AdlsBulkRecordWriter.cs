@@ -162,8 +162,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return Task.CompletedTask;
         }
 
-        protected override void DisposeInternal()
+        public override async Task FinalizeAsync()
         {
+            await base.FinalizeAsync().ConfigureAwait(false);
+
             try
             {
                 Directory.Delete(this.localRoot, true);

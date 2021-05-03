@@ -225,7 +225,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             // Default implementation does not do anything.
         }
 
-        public async Task FinalizeAsync()
+        public virtual async Task FinalizeAsync()
         {
             if (!this.initialized)
             {
@@ -245,13 +245,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             this.currentWriter.Dispose();
-
-            this.DisposeInternal();
-        }
-
-        protected virtual void DisposeInternal()
-        {
-            // Default implementation does nothing.
         }
 
         private void AugmentRecordMetadata(JObject record, RecordContext recordContext)
