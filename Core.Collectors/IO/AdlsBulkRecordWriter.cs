@@ -87,6 +87,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         protected override async Task NotifyCurrentOutputAsync()
         {
+            if (this.adlsConfigs.Count == 0)
+            {
+                throw new FatalTerminalException("No ADLS Config found for upload.");
+            }
+
             // Assume that upload will take at most 10 minutes.
             DateTime dateTimeSignature = DateTime.UtcNow + MaxUploadDelay;
             string fileName = $"{this.GetOutputPathPrefix(dateTimeSignature)}{this.currentSuffix}.json";
