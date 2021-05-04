@@ -69,7 +69,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 throw new FatalTerminalException($"For token '{adlsIngestionApplicationSecretEnvironmentVariableToken}', local.settings.json must provide an ADLS Ingestion Application Secret.");
             }
 
-            this.InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
+            this.AdlsClient = InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
         }
 
         private void LoadSettingsFromEnvironmentVariables()
@@ -97,10 +97,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            this.InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
+            this.AdlsClient = InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
         }
 
-        private void InitializeAdlsClient(string adlsAccount, string adlsTenantId, string clientId, string secretKey)
+        internal static AdlsClient InitializeAdlsClient(string adlsAccount, string adlsTenantId, string clientId, string secretKey)
         {
             ActiveDirectoryServiceSettings serviceSettings = ActiveDirectoryServiceSettings.Azure;
             serviceSettings.TokenAudience = AdlTokenAudience;
@@ -122,7 +122,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             }
 
             // Marcel: ProcCount * 8 is usually the recommended number of threads to be used without deprecation of performance to to overscheduling and preemption. It supposed to account for usage and IO completion waits.
-            this.AdlsClient = AdlsClient.CreateClient(adlsAccount, adlCreds, Environment.ProcessorCount * 8);
+            return AdlsClient.CreateClient(adlsAccount, adlCreds, Environment.ProcessorCount * 8);
         }
     }
 }

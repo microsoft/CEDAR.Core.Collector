@@ -113,22 +113,25 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 }
             }
 
-            Task<string>[] uploadTasks = new Task<string>[this.adlsConfigs.Count];
-            for (int counter = 0; counter < this.adlsConfigs.Count; counter++)
+            List<Task<string>> uploadTasks = new List<Task<string>>();
+            foreach (AdlsConfig adlsConfig in this.adlsConfigs)
             {
-                AdlsConfig adlsConfig = this.adlsConfigs[counter];
                 Task<string> uploadTask = Task<string>.Factory.StartNew(() => BulkUploadToAdlsConfig(finalOutputPath, adlsConfig));
-                uploadTasks[counter] = uploadTask;
+                uploadTasks.Add(uploadTask);
             }
 
             try
             {
-                string[] adlsDirectories = await Task.WhenAll(uploadTasks).ConfigureAwait(false);
+                IEnumerable<string> adlsDirectories = await Task.WhenAll<string>(uploadTasks).ConfigureAwait(false);
                 foreach (string adlsDirectory in adlsDirectories)
                 {
                     string finalAdlsOutputPath = finalOutputPath.Replace($"{this.localRoot}\\", $"{adlsDirectory}/");
                     this.AddOutputPath(finalAdlsOutputPath);
                 }
+            }
+            catch (Exception exception)
+            {
+                this.TelemetryClient.TrackException(exception, "ADLS Bulk Record Writer: upload failed.");
             }
             finally
             {
