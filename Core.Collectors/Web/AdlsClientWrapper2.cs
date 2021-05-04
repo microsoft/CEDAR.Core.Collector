@@ -15,21 +15,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         public AdlsClientWrapper2()
         {
             string adlsAccount = Environment.GetEnvironmentVariable("AdlsAccount2");
-            if (string.IsNullOrWhiteSpace(adlsAccount))
-            {
-                adlsAccount = "1es-private-data-c14.azuredatalakestore.net";
-            }
-
             string adlsTenantId = Environment.GetEnvironmentVariable("AdlsTenantId2");
-            if (string.IsNullOrWhiteSpace(adlsTenantId))
-            {
-                adlsTenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47";
-            }
-
             string adlsIngestionApplicationId = Environment.GetEnvironmentVariable("AdlsIngestionApplicationId2");
             string adlsIngestionApplicationSecret = Environment.GetEnvironmentVariable("AdlsIngestionApplicationSecret2");
 
-            if (string.IsNullOrWhiteSpace(adlsIngestionApplicationId) || string.IsNullOrWhiteSpace(adlsIngestionApplicationSecret))
+            if (string.IsNullOrWhiteSpace(adlsIngestionApplicationId) || string.IsNullOrWhiteSpace(adlsIngestionApplicationSecret) || string.IsNullOrWhiteSpace(adlsAccount) || string.IsNullOrWhiteSpace(adlsTenantId))
             {
                 // Don't fail loading the function app environment if these variables are not provided. Instead don't initialize the ADLS client.
                 // This way, we permit functions that don't depend on the ADLS client to still run without configuring the ADLS client.
