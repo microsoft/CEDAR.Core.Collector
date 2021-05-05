@@ -137,6 +137,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             catch (Exception exception)
             {
                 this.TelemetryClient.TrackException(exception, "ADLS Bulk Record Writer: upload failed.");
+                throw exception;
             }
             finally
             {
