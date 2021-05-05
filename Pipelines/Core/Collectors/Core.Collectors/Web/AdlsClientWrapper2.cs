@@ -6,7 +6,12 @@ using System;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
-    public class AdlsClientWrapper2 : IAdlsClient
+    public interface IAdlsClient2
+    {
+        public AdlsClient AdlsClient { get; }
+    }
+
+    public class AdlsClientWrapper2 : IAdlsClient2
     {
         public static readonly Uri AdlTokenAudience = new Uri(@"https://datalake.azure.net/");
 
