@@ -16,7 +16,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Context
 
         public string CollectorType { get; set; }
 
-        public string CollectorIdentity { get; set; }
+        public string CollectorIdentity { get; set; } = string.Empty;
 
         /// <summary>
         /// In case a function triggers another one, used to keep relation between multiple invocations.
