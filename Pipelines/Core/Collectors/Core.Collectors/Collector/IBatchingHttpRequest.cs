@@ -13,6 +13,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         bool HasNext { get; }
         string CurrentUrl { get; }
         string PreviousUrl { get; }
+        string PreviousIdentity { get; }
 
         Task<HttpResponseMessage> NextResponseAsync(IAuthentication authentication);
         void UpdateAvailability(JObject response, int recordCount);
