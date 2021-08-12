@@ -21,6 +21,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         private readonly Dictionary<string, JToken> authenticationTokenMap;
         private readonly Dictionary<string, JArray> recordWriterTokensMap;
         private readonly bool settingsFound;
+        private readonly JToken collectorIdentityToken;
 
         protected IConfigValueResolver ConfigResolver { private set; get; }
 
@@ -56,6 +57,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 };
                 this.telemetryEvents.Add("Bad Config", properties);
             }
+
+            this.collectorIdentityToken = config.SelectToken("CollectorIdentity");
 
             JToken collectors = this.config.SelectToken("Collectors");
             if (collectors == null)
@@ -171,6 +174,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         protected virtual StorageManager GetStorageManagerInternal(JArray recordWritersArray, ITelemetryClient telemetryClient)
         {
             return new StorageManager(recordWritersArray, telemetryClient);
+        }
+
+        public string GetCollectorIdentity()
+        {
+            if (this.collectorIdentityToken == null)
+            {
+                this.telemetryClient.TrackEvent("CollectorIdentity missing from Settings.json config file.");
+                return string.Empty;
+            }
+            return this.collectorIdentityToken.Value<string>();
         }
     }
 }
