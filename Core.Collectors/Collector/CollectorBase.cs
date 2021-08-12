@@ -8,6 +8,7 @@ using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -188,6 +189,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record)
         {
             bool lastBatch = !(batchingHttpRequest.HasNext) || haltCollection;
+            string identityForLogging = batchingHttpRequest.PreviousIdentity;
+            if (Guid.TryParse(identityForLogging, out _))
+            {
+                // Only log the first four characters of a GUID-based identity for security reasons.
+                identityForLogging = identityForLogging.Substring(0, 4);
+            }
+
             RecordContext context = new RecordContext()
             {
                 RecordType = collectionNode.RecordType,
@@ -195,6 +203,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 {
                     // For OriginatingUril, use previous URL since the recording is done after the request is complete where the current URL has already become the next one.
                     { "OriginatingUrl", batchingHttpRequest.PreviousUrl },
+                    { "Identity", identityForLogging },
                     { "LastBatch", lastBatch },
                 },
             };
