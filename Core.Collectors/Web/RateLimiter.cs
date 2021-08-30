@@ -183,7 +183,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public async Task WaitIfNeededAsync(IAuthentication authentication)
         {
-            await this.GetTableEntity(authentication);
+            await this.GetTableEntity(authentication).ConfigureAwait(false);
             if (this.cachedResult == null)
             {
                 return;
