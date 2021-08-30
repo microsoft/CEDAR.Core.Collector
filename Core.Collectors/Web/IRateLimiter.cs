@@ -4,6 +4,7 @@
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
@@ -12,5 +13,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         Task UpdateRetryAfterAsync(string identity, string requestUrl, HttpResponseMessage response);
         Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response);
         Task WaitIfNeededAsync(IAuthentication authentication);
+        Task<DateTime> TimeToExecute(IAuthentication authentication);
     }
 }

@@ -3,6 +3,7 @@
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Web;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -26,6 +27,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
         {
             // Assume success.
             return Task.CompletedTask;
+        }
+
+        public Task<DateTime> TimeToExecute(IAuthentication authentication)
+        {
+            Task<DateTime> task = Task<DateTime>.Factory.StartNew(() =>
+            {
+                return DateTime.UtcNow;
+            });
+            return task;
         }
     }
 }
