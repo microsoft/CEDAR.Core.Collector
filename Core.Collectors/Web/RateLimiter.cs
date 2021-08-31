@@ -170,7 +170,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return result;
         }
 
-        protected async Task<RateLimitTableEntity> GetTableEntity(IAuthentication authentication)
+        public async Task WaitIfNeededAsync(IAuthentication authentication)
         {
             TimeSpan elapsedSinceLastLookup = DateTime.UtcNow - this.cacheDateUtc;
             if (this.cachedResult == null || elapsedSinceLastLookup >= cacheInvalidationFrequency)
@@ -178,12 +178,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
                 this.cacheDateUtc = DateTime.UtcNow;
             }
-            return this.cachedResult;
-        }
-
-        public async Task WaitIfNeededAsync(IAuthentication authentication)
-        {
-            await this.GetTableEntity(authentication).ConfigureAwait(false);
+   
             if (this.cachedResult == null)
             {
                 return;

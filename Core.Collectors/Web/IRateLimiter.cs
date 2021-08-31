@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
