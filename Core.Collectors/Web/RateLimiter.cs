@@ -193,7 +193,5 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         }
 
         protected abstract Task WaitIfNeededAsync(IAuthentication authentication, RateLimitTableEntity tableEntity);
-
-        public abstract Task<DateTime> TimeToExecute(IAuthentication authentication);
     }
 }
