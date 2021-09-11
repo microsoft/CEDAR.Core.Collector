@@ -202,7 +202,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 AdditionalMetadata = new Dictionary<string, JToken>(collectionNode.AdditionalMetadata)
                 {
                     // For OriginatingUril, use previous URL since the recording is done after the request is complete where the current URL has already become the next one.
-                    { "OriginatingUrl", batchingHttpRequest.PreviousUrl },
+                    { "OriginatingUrl", batchingHttpRequest.HasNext ? batchingHttpRequest.PreviousUrl : batchingHttpRequest.CurrentUrl },
                     { "Identity", identityForLogging },
                     { "LastBatch", lastBatch },
                 },
