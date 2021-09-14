@@ -160,6 +160,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
 
             int recordCount = recordStrings.Count;
+            if (recordCount == 0)
+            {
+                // There is a valid case where ADO can return an empty response (empty array) but a different continuation token for a given request.
+                // This is because the underlying identity does not have access to the data, so ADO drops (filters) all the data before sending the
+                // response back to us. This causes us to detect looping over empy responses.
+                return false;
+            }
+
             if (recordCount != this.previousRecordCount)
             {
                 // record counts do not match. Update previous pointers and return false.
