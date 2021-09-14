@@ -8,11 +8,12 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
+    [Serializable]
     public class HttpResponseSignature
     {
-        private readonly HttpStatusCode statusCode;
-        private readonly Regex responseMessageRegex;
-        private readonly Func<JObject, bool> matcher;
+        public HttpStatusCode statusCode { get; set; }
+        public Regex responseMessageRegex { get; set; }
+        public Func<JObject, bool> matcher { get; set; }
 
         public HttpResponseSignature(HttpStatusCode statusCode, string responseMessageRegex)
         {
@@ -25,6 +26,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             this.statusCode = statusCode;
             this.matcher = matcher;
         }
+
+        public HttpResponseSignature()
+        { }
 
         public bool Matches(HttpStatusCode statusCode, JObject responseContent, string responseMessagePath = "$.message")
         {
