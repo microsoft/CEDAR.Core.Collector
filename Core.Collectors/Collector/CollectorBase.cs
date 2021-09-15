@@ -8,6 +8,7 @@ using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -159,6 +160,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
 
             int recordCount = recordStrings.Count;
+            if (recordCount == 0)
+            {
+                // There is a valid case where ADO can return an empty response (empty array) but a different continuation token for a given request.
+                // This is because the underlying identity does not have access to the data, so ADO drops (filters) all the data before sending the
+                // response back to us. This causes us to detect looping over empy responses.
+                return false;
+            }
+
             if (recordCount != this.previousRecordCount)
             {
                 // record counts do not match. Update previous pointers and return false.
@@ -188,13 +197,21 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record)
         {
             bool lastBatch = !(batchingHttpRequest.HasNext) || haltCollection;
+            string identityForLogging = batchingHttpRequest.PreviousIdentity;
+            if (Guid.TryParse(identityForLogging, out _))
+            {
+                // Only log the first four characters of a GUID-based identity for security reasons.
+                identityForLogging = identityForLogging.Substring(0, 4);
+            }
+
             RecordContext context = new RecordContext()
             {
                 RecordType = collectionNode.RecordType,
                 AdditionalMetadata = new Dictionary<string, JToken>(collectionNode.AdditionalMetadata)
                 {
                     // For OriginatingUril, use previous URL since the recording is done after the request is complete where the current URL has already become the next one.
-                    { "OriginatingUrl", batchingHttpRequest.PreviousUrl },
+                    { "OriginatingUrl", batchingHttpRequest.HasNext ? batchingHttpRequest.PreviousUrl : batchingHttpRequest.CurrentUrl },
+                    { "Identity", identityForLogging },
                     { "LastBatch", lastBatch },
                 },
             };

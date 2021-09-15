@@ -225,7 +225,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             // Default implementation does not do anything.
         }
 
-        public async Task FinalizeAsync()
+        public virtual async Task FinalizeAsync()
         {
             if (!this.initialized)
             {

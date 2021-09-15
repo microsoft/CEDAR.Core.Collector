@@ -13,7 +13,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Context
             metadata.Add("FunctionStartDate", functionContext.FunctionStartDate);
             metadata.Add("SessionId", functionContext.SessionId);
             metadata.Add("CollectorType", functionContext.CollectorType.ToString());
-
+            metadata.Add("CollectorIdentity", functionContext.CollectorIdentity);
             if (functionContext.SliceDate != DateTime.MinValue)
             {
                 metadata.Add("SliceDate", functionContext.SliceDate);
