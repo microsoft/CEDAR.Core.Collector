@@ -28,6 +28,47 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             this.initialized = false;
         }
 
+        public List<IRecordWriter> InitializeRecordWriters<T>(string identifier, T functionContext, ContextWriter<T> contextWriter, AdlsClient adlsClient) where T : FunctionContext
+        {
+            if (this.initialized)
+            {
+                throw new FatalTerminalException("StorageManager.InitializeRecordWriters has already been called, this operation should only be called once.");
+            }
+            this.initialized = true;
+            this.recordWriters = new List<IRecordWriter>();
+            foreach (JToken recordWriterToken in recordWritersArray)
+            {
+                JToken recordWriterTypeToken = recordWriterToken.SelectToken("Type");
+                if (recordWriterTypeToken == null)
+                {
+                    throw new FatalTerminalException("Settings.json must provide a Type for storage locations.");
+                }
+                RecordWriterType recordWriterType = Enum.Parse<RecordWriterType>(recordWriterTypeToken.Value<string>());
+                switch (recordWriterType)
+                {
+                    case RecordWriterType.AzureDataLakeStorageV1:
+                        IRecordWriter adlsRecordWriter = this.InitializeAdlsBulkRecordWriter(recordWriterToken, adlsClient, identifier, functionContext, contextWriter);
+                        this.recordWriters.Add(adlsRecordWriter);
+                        break;
+                    case RecordWriterType.AzureBlob:
+                        IRecordWriter blobRecordWriter = this.InitializeAzureBlobWriter(recordWriterToken, identifier, functionContext, contextWriter);
+                        this.recordWriters.Add(blobRecordWriter);
+                        break;
+                    case RecordWriterType.SplitAzureBlob:
+                        IRecordWriter splitBlobRecordWriter = this.InitializeSplitAzureBlobWriter(recordWriterToken, functionContext, contextWriter);
+                        this.recordWriters.Add(splitBlobRecordWriter);
+                        break;
+                    default:
+                        throw new FatalTerminalException($"Unsupported Storage Type : {recordWriterType}");
+                }
+            }
+            if (this.recordWriters.Count == 0)
+            {
+                throw new FatalTerminalException("No valid record writers are provided in Settings.json.");
+            }
+            return new List<IRecordWriter>(this.recordWriters);
+        }
+
         public List<IRecordWriter> InitializeRecordWriters<T>(T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
         {
             if (this.initialized)

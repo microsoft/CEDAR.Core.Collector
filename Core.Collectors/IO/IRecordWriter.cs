@@ -20,6 +20,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
     public enum RecordWriterType
     {
+        AzureDataLakeStorageV1,
         AzureBlob,
         SplitAzureBlob,
     }
