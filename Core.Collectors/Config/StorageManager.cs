@@ -121,6 +121,53 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             return new SplitAzureBlobRecordWriter<T>(rootContainer, notificationQueuePrefix, this.telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable);
         }
 
+        private IRecordWriter InitializeAzureBlobWriter<T>(JToken recordWriterToken, string identifier, T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
+        {
+            JToken rootContainerToken = recordWriterToken.SelectToken("RootContainer");
+            JToken outputQueueNameToken = recordWriterToken.SelectToken("OutputQueueName");
+            if (rootContainerToken == null || outputQueueNameToken == null)
+            {
+                throw new FatalTerminalException("AzureBlob storage must provide a RootContainer and an OutputQueueName.");
+            }
+
+            JToken storageConnectionEnvironmentVariableToken = recordWriterToken.SelectToken("StorageConnectionEnvironmentVariable");
+            JToken notificationQueueEnvironmentVariableToken = recordWriterToken.SelectToken("NotificationQueueEnvironmentVariable");
+
+            // The following are optional (only used in Azure DevOps right now), so permit these values (tokens) to be null.
+            string storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariableToken?.Value<string>();
+            string notificationQueueEnvironmentVariable = notificationQueueEnvironmentVariableToken?.Value<string>();
+
+            string rootContainer = rootContainerToken.Value<string>();
+            string outputQueueName = outputQueueNameToken.Value<string>();
+            return this.ConstructAzureBlobWriter(rootContainer, outputQueueName, identifier, this.telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueEnvironmentVariable);
+        }
+
+        private IRecordWriter InitializeAdlsBulkRecordWriter<T>(JToken recordWriterToken, AdlsClient adlsClient, string identifier, T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
+        {
+            JToken rootFolderToken = recordWriterToken.SelectToken("RootFolder");
+            JToken versionToken = recordWriterToken.SelectToken("Version");
+            if (rootFolderToken == null || versionToken == null)
+            {
+                throw new FatalTerminalException("AzureDataLakeStorageV1 must provide RootFolder and Version.");
+            }
+
+            string rootFolder = rootFolderToken.Value<string>();
+            string version = versionToken.Value<string>();
+            return new AdlsBulkRecordWriter<T>(adlsClient, identifier, this.telemetryClient, functionContext, contextWriter, root: rootFolder, version);
+        }
+
+        protected virtual AzureBlobRecordWriter<T> ConstructAzureBlobWriter<T>(string rootContainer,
+                                                                               string outputQueueName,
+                                                                               string identifier,
+                                                                               ITelemetryClient telemetryClient,
+                                                                               T functionContext,
+                                                                               ContextWriter<T> contextWriter,
+                                                                               string storageConnectionEnvironmentVariable,
+                                                                               string notificationQueueEnvironmentVariable) where T : FunctionContext
+        {
+            return new AzureBlobRecordWriter<T>(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter);
+        }
+
         /// <summary>
         /// Important Note: Ensure that the StorageManager is properly disposed (which disposes the underlying record writers before this method is called.
         ///                 Once the record writers are finalized, further operations (e.g., Dispose) will be ignored.
