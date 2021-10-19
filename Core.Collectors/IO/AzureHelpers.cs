@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Data.Tables;
+using Azure.Identity;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -34,6 +36,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             string stagingBlobConnectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
             return CloudStorageAccount.Parse(stagingBlobConnectionString);
+        }
+
+        private static Uri GetStorageUri(string storageAccountNameEnvironmentVariable, string endpointFormatString)
+        {
+            string accountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
+            string tableEndpoint = string.Format(endpointFormatString, accountName);
+            return new Uri(tableEndpoint);
         }
 
         public static async Task<string> GetBlobContentAsync(string container, string path, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
@@ -120,6 +129,15 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference(tableName);
+            await table.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return table;
+        }
+
+        public static async Task<TableClient> GetStorageTableAsync(string tableName, string cosmosDbAccountNameEnvironmentVariable = "AzureCosmosDbAccountName", string tableEndpointFormatString = "https://{0}.table.core.windows.net/")
+        {
+            Uri tableUri = GetStorageUri(cosmosDbAccountNameEnvironmentVariable, tableEndpointFormatString);
+            var cred = new DefaultAzureCredential();
+            TableClient table = new TableClient(tableUri, tableName, cred);
             await table.CreateIfNotExistsAsync().ConfigureAwait(false);
             return table;
         }

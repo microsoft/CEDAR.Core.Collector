@@ -5,6 +5,7 @@
     <RootNamespace>Microsoft.CloudMine.Core.Collectors</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Data.Tables" Version="12.2.1" />
     <PackageReference Include="Azure.Identity" Version="1.1.1" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" Version="4.0.3" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.13.1" />
