@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Azure.DataLake.Store;
+using Azure.Storage.Files.DataLake;
 using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.IO;
@@ -28,7 +28,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             this.initialized = false;
         }
 
-        public List<IRecordWriter> InitializeRecordWriters<T>(string identifier, T functionContext, ContextWriter<T> contextWriter, AdlsClient adlsClient) where T : FunctionContext
+        public List<IRecordWriter> InitializeRecordWriters<T>(string identifier, T functionContext, ContextWriter<T> contextWriter, DataLakeServiceClient dataLakeServiceClient) where T : FunctionContext
         {
             if (this.initialized)
             {
@@ -49,7 +49,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 switch (recordWriterType)
                 {
                     case RecordWriterType.AzureDataLakeStorageV1:
-                        IRecordWriter adlsRecordWriter = this.InitializeAdlsBulkRecordWriter(recordWriterToken, adlsClient, identifier, functionContext, contextWriter);
+                        IRecordWriter adlsRecordWriter = this.InitializeAdlsBulkRecordWriter(recordWriterToken, dataLakeServiceClient, identifier, functionContext, contextWriter);
                         this.recordWriters.Add(adlsRecordWriter);
                         break;
                     case RecordWriterType.AzureBlob:
@@ -110,7 +110,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             return this.ConstructAzureBlobWriter(rootContainer, outputQueueName, identifier, this.telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueEnvironmentVariable);
         }
 
-        private IRecordWriter InitializeAdlsBulkRecordWriter<T>(JToken recordWriterToken, AdlsClient adlsClient, string identifier, T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
+        private IRecordWriter InitializeAdlsBulkRecordWriter<T>(JToken recordWriterToken, DataLakeServiceClient dataLakeServiceClient, string identifier, T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
         {
             JToken rootFolderToken = recordWriterToken.SelectToken("RootFolder");
             JToken versionToken = recordWriterToken.SelectToken("Version");
@@ -121,7 +121,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
 
             string rootFolder = rootFolderToken.Value<string>();
             string version = versionToken.Value<string>();
-            return new AdlsBulkRecordWriter<T>(adlsClient, identifier, this.telemetryClient, functionContext, contextWriter, root: rootFolder, version);
+            return new AdlsBulkRecordWriter<T>(dataLakeServiceClient, identifier, this.telemetryClient, functionContext, contextWriter, root: rootFolder, version);
         }
 
         protected virtual AzureBlobRecordWriter<T> ConstructAzureBlobWriter<T>(string rootContainer,

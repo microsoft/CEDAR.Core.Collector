@@ -3,26 +3,26 @@
 
 using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Telemetry;
-using Microsoft.Azure.DataLake.Store;
+using Azure.Storage.Files.DataLake;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.DataLake.Store.FileTransfer;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using System.Diagnostics;
 using System.Collections.Generic;
+using Azure;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public class AdlsConfig
     {
-        public AdlsClient AdlsClient { get; }
+        public DataLakeServiceClient DataLakeServiceClient { get; }
         public string AdlsRoot { get; }
         public string Version { get; }
 
-        public AdlsConfig(AdlsClient adlsClient, string adlsRoot, string version)
+        public AdlsConfig(DataLakeServiceClient DataLakeServiceClient, string adlsRoot, string version)
         {
-            this.AdlsClient = adlsClient;
+            this.DataLakeServiceClient = DataLakeServiceClient;
             this.AdlsRoot = adlsRoot;
             this.Version = version;
         }
@@ -44,14 +44,14 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private string currentLocalPath;
 
         // Keeping this constructor for backwards compatibility for now.
-        public AdlsBulkRecordWriter(AdlsClient adlsClient,
+        public AdlsBulkRecordWriter(DataLakeServiceClient dataLakeServiceClient,
                                     string identifier,
                                     ITelemetryClient telemetryClient,
                                     T functionContext,
                                     ContextWriter<T> contextWriter,
                                     string root,
                                     string version)
-            : this(adlsConfigs: new List<AdlsConfig>() { new AdlsConfig(adlsClient, root, version) }, identifier, telemetryClient, functionContext, contextWriter)
+            : this(adlsConfigs: new List<AdlsConfig>() { new AdlsConfig(dataLakeServiceClient, root, version) }, identifier, telemetryClient, functionContext, contextWriter)
         {
         }
 
@@ -121,7 +121,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             List<Task<string>> uploadTasks = new List<Task<string>>();
             foreach (AdlsConfig adlsConfig in this.adlsConfigs)
             {
-                Task<string> uploadTask = Task<string>.Factory.StartNew(() => BulkUploadToAdlsConfig(finalOutputPath, adlsConfig));
+                Task<string> uploadTask = Task<string>.Factory.StartNew(() => AppendDataToAdlsConfig(finalOutputPath, adlsConfig));
                 uploadTasks.Add(uploadTask);
             }
 
@@ -162,32 +162,34 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        private string BulkUploadToAdlsConfig(string finalOutputPath, AdlsConfig adlsConfig)
+        private string AppendDataToAdlsConfig(string finalOutputPath, AdlsConfig adlsConfig)
         {
             Stopwatch uploadTimer = Stopwatch.StartNew();
             string adlsDirectory = $"{adlsConfig.AdlsRoot}/{adlsConfig.Version}";
 
-            TransferStatus status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory);
+            // Create a DataLake Filesystem
+            DataLakeFileSystemClient filesystem = adlsConfig.DataLakeServiceClient.GetFileSystemClient("sample-filesystem");
+            filesystem.Create();
+
+            // Create a DataLake file using a DataLake Filesystem
+            DataLakeFileClient file = filesystem.GetFileClient("sample-file");
+            file.Create();
             bool retried = false;
-            if (status.EntriesFailed.Count != 0)
+
+            try
+            {
+                file.Append(File.OpenRead(adlsDirectory), 0);
+            }
+            catch (RequestFailedException)
             {
                 retried = true;
-                // Retry once.
-                status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory, shouldOverwrite: IfExists.Fail);
-                if (status.EntriesFailed.Count != 0)
+                // Retry once
+                try
                 {
-                    foreach (SingleEntryTransferStatus failedTransferStatus in status.EntriesFailed)
-                    {
-                        Dictionary<string, string> transferStatusProperties = new Dictionary<string, string>()
-                        {
-                            { "EntryName", failedTransferStatus.EntryName },
-                            { "EntrySize", failedTransferStatus.EntrySize.ToString() },
-                            { "TransferErrors", failedTransferStatus.Errors },
-                            { "TransferStatus", failedTransferStatus.Status.ToString() },
-                            { "TransferType", failedTransferStatus.Type.ToString() },
-                        };
-                        this.TelemetryClient.TrackEvent("FailedTransferStatus", transferStatusProperties);
-                    }
+                    file.Append(File.OpenRead(adlsDirectory), 0);
+                }
+                catch (RequestFailedException)
+                {
                     throw new FatalException($"Cannot bulk upload '{finalOutputPath}'.");
                 }
             }
