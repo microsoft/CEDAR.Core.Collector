@@ -35,8 +35,20 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 TEndpointProgressTableEntity cachedProgressRecord = await this.RetrieveAsync(progressRecord).ConfigureAwait(false);
                 if (cachedProgressRecord != null && cachedProgressRecord.Succeeded)
                 {
+                    TEndpointProgressTableEntity cachedProgressRecordCosmosDb = await this.RetrieveAsyncCosmosDb(progressRecord).ConfigureAwait(false);
+                    if (cachedProgressRecordCosmosDb == null)
+                    {
+                        // If the Cosmos DB cache doesn't include the progress record from Table storage, copy it over.
+                        Dictionary<string, string> propertiesCosmosDb = new Dictionary<string, string>()
+                        {
+                            { "ApiName", collectionNode.ApiName },
+                            { "RecordType", collectionNode.RecordType },
+                            { "ProgressRecord", cachedProgressRecord.ToString() },
+                        };
+                        this.telemetryClient.TrackEvent("CopiedRecordToCosmosDb", propertiesCosmosDb);
+                        await this.CacheAsyncCosmosDb(cachedProgressRecord).ConfigureAwait(false);
+                    }
                     // If the cache includes the progress record and record.Succeeded is true, skip re-collection since this endpoint was previously collected successfully.
-
                     Dictionary<string, string> properties = new Dictionary<string, string>()
                     {
                         { "ApiName", collectionNode.ApiName },
@@ -66,8 +78,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         }
 
         protected abstract Task<TEndpointProgressTableEntity> RetrieveAsync(TEndpointProgressTableEntity progressRecord);
+        protected abstract Task<TEndpointProgressTableEntity> RetrieveAsyncCosmosDb(TEndpointProgressTableEntity progressRecord);
 
         protected abstract Task CacheAsync(TEndpointProgressTableEntity progressRecord);
+        protected abstract Task CacheAsyncCosmosDb(TEndpointProgressTableEntity progressRecord);
 
         public void FinalizeCollection()
         {
