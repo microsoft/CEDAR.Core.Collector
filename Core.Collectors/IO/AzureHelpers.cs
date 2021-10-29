@@ -116,7 +116,16 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return result;
         }
 
-        public static async Task<TableClient> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        public static async Task<CloudTable> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference(tableName);
+            await table.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return table;
+        }
+
+        public static async Task<TableClient> GetTableClientAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             string connectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
             return new TableClient(connectionString, tableName);
