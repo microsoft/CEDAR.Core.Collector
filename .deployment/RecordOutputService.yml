@@ -10,8 +10,7 @@ trigger:
 - main
 
 pool:
-  name: 'CloudMine'
-  vmImage: 'MerlinBotDefaultNetCore'
+  vmImage: 'windows-latest'
 
 steps:
 
