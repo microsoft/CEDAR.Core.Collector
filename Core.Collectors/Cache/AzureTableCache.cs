@@ -1,71 +1,77 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Threading.Tasks;
-using Azure;
-using Azure.Data.Tables;
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public class AzureTableCache<T> : ICache<T> where T : TableEntityWithContext, new()
+    public class AzureTableCache<T> : ICache<T> where T : TableEntityWithContext
     {
         private readonly ITelemetryClient telemetryClient;
         private readonly string name;
         private readonly string storageConnectionEnvironmentVariable;
 
-        private TableClient table;
+        private CloudTable table;
         private bool initialized;
 
         public AzureTableCache(ITelemetryClient telemetryClient, string name, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             this.telemetryClient = telemetryClient;
-            initialized = false;
+            this.initialized = false;
             this.name = name;
             this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
         }
 
-        public AzureTableCache(ITelemetryClient telemetryClient, TableClient table)
+        public AzureTableCache(ITelemetryClient telemetryClient, CloudTable table)
         {
             this.telemetryClient = telemetryClient;
             this.table = table;
-            initialized = true;
-            name = table.Name;
+            this.initialized = true;
+            this.name = table.Name;
         }
 
         public async Task InitializeAsync()
         {
-            if (initialized)
+            if (this.initialized)
             {
-                telemetryClient.LogWarning($"AzureTable ({name}).InitializeAsync was called after azure table was initialized. Ignoring the call.");
+                this.telemetryClient.LogWarning($"AzureTable ({this.name}).InitializeAsync was called after azure table was initialized. Ignoring the call.");
                 return;
             }
 
-            table = await AzureHelpers.GetStorageTableAsync(name, storageConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.table = await AzureHelpers.GetStorageTableAsync(this.name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
 
-            initialized = true;
+            this.initialized = true;
         }
 
         public async Task CacheAsync(T tableEntity)
         {
-            if (!initialized)
+            if (!this.initialized)
             {
-                telemetryClient.LogWarning($"AzureTable ({name}).CacheAsync was called before azure table was initialized. Ignoring the call.");
+                this.telemetryClient.LogWarning($"AzureTable ({this.name}).CacheAsync was called before azure table was initialized. Ignoring the call.");
                 return;
             }
 
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(tableEntity);
             try
             {
-                var result = await table.UpsertEntityAsync(tableEntity).ConfigureAwait(false);
-                Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
+                TableResult insertOrReplaceResult = await this.table.ExecuteAsync(insertOrReplaceOperation).ConfigureAwait(false);
+                int insertOrReplaceStatusCode = insertOrReplaceResult.HttpStatusCode;
+                // 204: no content => InsertOrReplace operation does not return any content when successful.
+                if (insertOrReplaceStatusCode != 204)
                 {
-                    { "ErrorReturnCode", result.Status.ToString() }, { "Operation", "CacheAsync" },
-                };
-                telemetryClient.TrackEvent("CachingError", properties);
+                    Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
+                    {
+                        { "ErrorReturnCode", insertOrReplaceStatusCode.ToString() },
+                        { "Operation", "CacheAsync" },
+                    };
+                    this.telemetryClient.TrackEvent("CachingError", properties);
+                }
             }
             catch (Exception exception)
             {
@@ -75,7 +81,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                     { "ErrorType", exception.GetType().ToString() },
                     { "Operation", "CacheAsync" },
                 };
-                telemetryClient.TrackEvent("CachingError", properties);
+                this.telemetryClient.TrackEvent("CachingError", properties);
             }
         }
 
@@ -83,51 +89,67 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         {
             if (currentTableEntity == null)
             {
+                TableOperation insertOperation = TableOperation.Insert(newTableEntity);
                 try
                 {
-                    await table.AddEntityAsync(newTableEntity).ConfigureAwait(false);
+                    await this.table.ExecuteAsync(insertOperation).ConfigureAwait(false);
                     return true;
                 }
-                catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+                catch (Exception insertException) when (insertException is StorageException)
                 {
-                    Dictionary<string, string> properties = new Dictionary<string, string>
+                    StorageException insertStorageException = (StorageException)insertException;
+                    int insertStatusCode = insertStorageException.RequestInformation.HttpStatusCode;
+                    if (insertStatusCode != 409) // Ignore 409, since it (Conflict) indicates that someone else did the update before us.
                     {
-                        { "ErrorMessage", ex.Message },
-                        { "ErrorReturnCode", ex.Status.ToString() },
-                        { "Operation", "CacheAtomicAsync" },
-                    };
-                    telemetryClient.TrackEvent("CachingError", properties);
+                        Dictionary<string, string> properties = new Dictionary<string, string>()
+                        {
+                            { "ErrorMessage", insertStorageException.Message },
+                            { "ErrorReturnCode", insertStatusCode.ToString() },
+                            { "Operation", "CacheAtomicAsync" },
+                        };
+                        this.telemetryClient.TrackEvent("CachingError", properties);
+                    }
                 }
 
                 return false;
             }
 
+            string currentETag = currentTableEntity.ETag;
+            newTableEntity.ETag = currentETag;
+            TableOperation replaceOperation = TableOperation.Replace(newTableEntity);
             try
             {
-                await table.UpdateEntityAsync(newTableEntity, currentTableEntity.ETag, TableUpdateMode.Replace).ConfigureAwait(false);
+                await this.table.ExecuteAsync(replaceOperation).ConfigureAwait(false);
                 return true;
             }
-            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.PreconditionFailed)
+            catch (Exception replaceException) when (replaceException is StorageException)
             {
-                Dictionary<string, string> properties = new Dictionary<string, string>
+                StorageException replaceStorageException = (StorageException)replaceException;
+                int replaceStatusCode = replaceStorageException.RequestInformation.HttpStatusCode;
+                if (replaceStatusCode != 412) // Ignore 412, since it (Pre-condition failed) indicates that someone else did the update before us.
                 {
-                    { "ErrorMessage", ex.Message },
-                    { "ErrorReturnCode", ex.Status.ToString() },
-                    { "Operation", "CacheAtomicAsync" },
-                };
-                telemetryClient.TrackEvent("CachingError", properties);
+                    Dictionary<string, string> properties = new Dictionary<string, string>()
+                    {
+                        { "ErrorMessage", replaceException.Message },
+                        { "ErrorReturnCode", replaceStatusCode.ToString() },
+                        { "Operation", "CacheAtomicAsync" },
+                    };
+                    this.telemetryClient.TrackEvent("CachingError", properties);
+                }
+
+                return false;
             }
-            return false;
         }
 
         public async Task<T> RetrieveAsync(T tableEntity)
         {
-            if (!initialized)
+            if (!this.initialized)
             {
-                telemetryClient.LogWarning($"AzureTable ({name}).CacheAsync was called before azure table was initialized. Ignoring the call.");
+                this.telemetryClient.LogWarning($"AzureTable ({this.name}).CacheAsync was called before azure table was initialized. Ignoring the call.");
                 return null;
             }
 
+            TableOperation retrieveOperation = TableOperation.Retrieve<T>(tableEntity.PartitionKey, tableEntity.RowKey);
             try
             {
                 TableResult retrieveResult = await this.table.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
@@ -154,7 +176,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                     { "ErrorType", exception.GetType().ToString() },
                     { "Operation", "RetrieveAsync" },
                 };
-                telemetryClient.TrackEvent("CachingError", properties);
+                this.telemetryClient.TrackEvent("CachingError", properties);
 
                 return null;
             }
@@ -162,7 +184,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
 
         public async Task<bool> ExistsAsync(T repositoryTableEntity)
         {
-            T result = await RetrieveAsync(repositoryTableEntity).ConfigureAwait(false);
+            T result = await this.RetrieveAsync(repositoryTableEntity).ConfigureAwait(false);
             return result != null;
         }
     }
