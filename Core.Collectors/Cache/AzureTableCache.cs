@@ -1,14 +1,14 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.CloudMine.Core.Collectors.IO;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.CloudMine.Core.Collectors.IO;
+using Microsoft.CloudMine.Core.Collectors.Telemetry;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
@@ -61,12 +61,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             try
             {
                 var result = await table.UpsertEntityAsync(tableEntity).ConfigureAwait(false);
-                    Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
-                    {
-                        { "ErrorReturnCode", result.Status.ToString() },
-                        { "Operation", "CacheAsync" },
-                    };
-                    telemetryClient.TrackEvent("CachingError", properties);
+                Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
+                {
+                    { "ErrorReturnCode", result.Status.ToString() }, { "Operation", "CacheAsync" },
+                };
+                telemetryClient.TrackEvent("CachingError", properties);
             }
             catch (Exception exception)
             {
@@ -110,13 +109,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.PreconditionFailed)
             {
-                    Dictionary<string, string> properties = new Dictionary<string, string>
-                    {
-                        { "ErrorMessage", ex.Message },
-                        { "ErrorReturnCode", ex.Status.ToString() },
-                        { "Operation", "CacheAtomicAsync" },
-                    };
-                    telemetryClient.TrackEvent("CachingError", properties);
+                Dictionary<string, string> properties = new Dictionary<string, string>
+                {
+                    { "ErrorMessage", ex.Message },
+                    { "ErrorReturnCode", ex.Status.ToString() },
+                    { "Operation", "CacheAtomicAsync" },
+                };
+                telemetryClient.TrackEvent("CachingError", properties);
             }
             return false;
         }
@@ -138,7 +137,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             {
                 Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
                 {
-                    { "ErrorReturnCode", exception.ToString() }, { "ErrorType", exception.GetType().ToString() }, { "Operation", "RetrieveAsync" },
+                    { "ErrorReturnCode", exception.ToString() },
+                    { "ErrorType", exception.GetType().ToString() },
+                    { "Operation", "RetrieveAsync" },
                 };
                 telemetryClient.TrackEvent("CachingError", properties);
 
