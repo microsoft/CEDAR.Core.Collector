@@ -20,8 +20,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         private static readonly long? RateLimitOverride;
 
         private readonly ICache<RateLimitTableEntity> rateLimiterCache;
+        private readonly ICache<RateLimitTableEntity> rateLimiterCacheCosmosDb;
         protected ITelemetryClient TelemetryClient { get; private set; }
         private readonly bool expectRateLimitingHeaders;
+        // TODO (myles-mcleroy): Remove dual writing when Cosmos DB migration is complete.
+        private readonly bool enableDualWriting;
 
         protected string OrganizationId { get; private set; }
         protected string OrganizationName { get; private set; }
@@ -40,8 +43,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                            string organizationName,
                            ICache<RateLimitTableEntity> rateLimiterCache,
                            ITelemetryClient telemetryClient,
-                           bool expectRateLimitingHeaders)
-            : this(organizationId, organizationName, rateLimiterCache, telemetryClient, expectRateLimitingHeaders, cacheInvalidationFrequency: TimeSpan.FromTicks(0))
+                           bool expectRateLimitingHeaders,
+                           ICache<RateLimitTableEntity> rateLimiterCacheCosmosDb = null,
+                           bool enableDualWriting = false)
+            : this(organizationId, organizationName, rateLimiterCache, telemetryClient, expectRateLimitingHeaders, cacheInvalidationFrequency: TimeSpan.FromTicks(0), rateLimiterCacheCosmosDb, enableDualWriting)
         {
         }
 
@@ -50,7 +55,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                            ICache<RateLimitTableEntity> rateLimiterCache,
                            ITelemetryClient telemetryClient,
                            bool expectRateLimitingHeaders,
-                           TimeSpan cacheInvalidationFrequency)
+                           TimeSpan cacheInvalidationFrequency,
+                           ICache<RateLimitTableEntity> rateLimiterCacheCosmosDb = null,
+                           bool enableDualWriting = false)
         {
             this.OrganizationId = organizationId;
             this.OrganizationName = organizationName;
@@ -61,6 +68,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
             this.cachedResult = null;
             this.cacheDateUtc = DateTime.MinValue;
+
+            // Dual writing for ADO Collectors.
+            this.rateLimiterCacheCosmosDb = rateLimiterCacheCosmosDb;
+            this.enableDualWriting = enableDualWriting;
         }
 
         public async Task UpdateRetryAfterAsync(string identity, string requestUrl, HttpResponseMessage response)
@@ -83,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 rateLimitResetDate = Epoch.AddSeconds(rateLimitReset);
             }
 
-            // When this method is called, it is expected that some of the required headers (e.g., rate-limit limit) might be missing. 
+            // When this method is called, it is expected that some of the required headers (e.g., rate-limit limit) might be missing.
             // Since the goal of this method is to update "Retry-After" column stored, permit those missing values and instead keep the existing values stored (if any).
             RateLimitTableEntity existingRecord = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
             if (existingRecord == null)
@@ -98,6 +109,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
             this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate);
             await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
+            if (this.enableDualWriting)
+            {
+                // Dual writing for ADO Collectors is enabled.
+                await this.rateLimiterCacheCosmosDb.CacheAsync(this.cachedResult).ConfigureAwait(false);
+            }
             this.cacheDateUtc = DateTime.UtcNow;
         }
 
@@ -152,7 +168,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate)).ConfigureAwait(false);
+            RateLimitTableEntity rateLimitTableEntity = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate);
+            await this.rateLimiterCache.CacheAsync(rateLimitTableEntity).ConfigureAwait(false);
+            if (this.enableDualWriting)
+            {
+                // Dual writing for ADO Collectors is enabled.
+                await this.rateLimiterCacheCosmosDb.CacheAsync(rateLimitTableEntity).ConfigureAwait(false);
+            }
         }
 
         public static long GetRetryAfter(HttpResponseHeaders responseHeaders)
