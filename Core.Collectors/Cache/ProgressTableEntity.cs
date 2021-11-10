@@ -17,7 +17,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
 
         // Used for serialization.
         public ProgressTableEntity()
-        { 
+        {
         }
 
         // Used only to retrieve (lookup) entries.
