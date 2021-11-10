@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Tests.Cache
 {
-    public class InMemoryCache<T> : ICache<T> where T : DataTableEntityWithContext
+    public class InMemoryDataTableCache<T> : ICache<T> where T : DataTableEntityWithContext
     {
         private readonly Dictionary<string, Dictionary<string, T>> cache;
 
         public int LookupCount { get; private set; }
         public int InsertCount { get; private set; }
 
-        public InMemoryCache()
+        public InMemoryDataTableCache()
         {
             this.cache = new Dictionary<string, Dictionary<string, T>>();
             this.InsertCount = 0;

@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public class RateLimitTableEntity : DataTableEntityWithContext
+    public class RateLimitDataTableEntity : DataTableEntityWithContext
     {
         public const string GlobalOrganizationId = "*";
 
@@ -18,17 +18,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         public DateTime? RetryAfter { get; set; }
 
         // Used for serialization.
-        public RateLimitTableEntity()
+        public RateLimitDataTableEntity()
         {
         }
 
         // Used only to retrieve (lookup) entries.
-        public RateLimitTableEntity(string identity, string organizationId, string organizationName)
+        public RateLimitDataTableEntity(string identity, string organizationId, string organizationName)
             : this(identity, organizationId, organizationName, rateLimitLimit: long.MinValue, rateLimitRemaining: long.MinValue, rateLimitReset: null, retryAfter: null)
         {
         }
 
-        public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter)
+        public RateLimitDataTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter)
         {
             this.PartitionKey = identity;
             this.RowKey = organizationId;

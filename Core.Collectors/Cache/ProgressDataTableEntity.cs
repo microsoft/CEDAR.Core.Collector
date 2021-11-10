@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public class ProgressTableEntity : DataTableEntityWithContext
+    public class ProgressDataTableEntity : DataTableEntityWithContext
     {
         public DateTime StartDateUtc { get; set; }
         public DateTime EndDateUtc { get; set; }
@@ -16,17 +16,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         public bool Succeeded { get; set; }
 
         // Used for serialization.
-        public ProgressTableEntity()
+        public ProgressDataTableEntity()
         {
         }
 
         // Used only to retrieve (lookup) entries.
-        public ProgressTableEntity(DateTime startDateUtc, string identifierPrefix, string endpointName, TimeSpan collectionFrequency)
+        public ProgressDataTableEntity(DateTime startDateUtc, string identifierPrefix, string endpointName, TimeSpan collectionFrequency)
             : this(startDateUtc, identifierPrefix, endpointName, collectionFrequency, sessionId: string.Empty, succeeded: false)
         {
         }
 
-        public ProgressTableEntity(DateTime startDateUtc, string identifierPrefix, string progressIdentifier, TimeSpan collectionFrequency, string sessionId, bool succeeded)
+        public ProgressDataTableEntity(DateTime startDateUtc, string identifierPrefix, string progressIdentifier, TimeSpan collectionFrequency, string sessionId, bool succeeded)
         {
             DateTime endDateUtc = startDateUtc.Add(collectionFrequency);
             this.PartitionKey = GetPartitionKey(startDateUtc, collectionFrequency);

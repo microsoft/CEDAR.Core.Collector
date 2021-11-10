@@ -143,12 +143,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return new TableClient(connectionString, tableName);
         }
 
-        public static async Task<TableClient> GetTableClientAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
-        {
-            string connectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
-            return new TableClient(connectionString, tableName);
-        }
-
         public static string GenerateNotificationMessage(CloudBlob blob)
         {
             string blobSas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
