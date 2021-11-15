@@ -140,7 +140,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static async Task<TableClient> GetTableClientAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             string connectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
-            return new TableClient(connectionString, tableName);
+            TableClient table = new TableClient(connectionString, tableName);
+            await table.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return table;
         }
 
         public static string GenerateNotificationMessage(CloudBlob blob)
