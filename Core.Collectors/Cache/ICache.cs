@@ -2,7 +2,7 @@
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public interface ICache<T> where T : TableEntityWithContext
+    public interface ICache<T> where T : IContext
     {
         Task InitializeAsync();
         Task CacheAsync(T tableEntity);
