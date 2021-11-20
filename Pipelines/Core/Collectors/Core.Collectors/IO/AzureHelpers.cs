@@ -128,6 +128,24 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return result;
         }
 
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            List<CloudQueue> result = new List<CloudQueue>();
+
+            CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            QueueContinuationToken continuationToken = null;
+            do
+            {
+                QueueResultSegment queueResultSegment = await queueClient.ListQueuesSegmentedAsync(continuationToken).ConfigureAwait(false);
+                continuationToken = queueResultSegment.ContinuationToken;
+
+                result.AddRange(queueResultSegment.Results);
+            } while (continuationToken != null);
+
+            return result;
+        }
+
         public static async Task<CloudTable> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
