@@ -11,7 +11,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Azure.Data.Tables;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
 {
@@ -153,12 +152,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             CloudTable table = tableClient.GetTableReference(tableName);
             await table.CreateIfNotExistsAsync().ConfigureAwait(false);
             return table;
-        }
-
-        public static async Task<TableClient> GetTableClientAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
-        {
-            string connectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
-            return new TableClient(connectionString, tableName);
         }
 
         public static string GenerateNotificationMessage(CloudBlob blob)
