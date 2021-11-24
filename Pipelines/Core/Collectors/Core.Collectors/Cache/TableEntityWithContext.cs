@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public abstract class TableEntityWithContext : TableEntity, IContext
+    public abstract class TableEntityWithContext : TableEntity
     {
         private readonly Dictionary<string, string> context;
 

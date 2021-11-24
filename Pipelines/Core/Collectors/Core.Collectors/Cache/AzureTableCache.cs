@@ -156,7 +156,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 int retrieveStatusCode = retrieveResult.HttpStatusCode;
                 // 200: OK => The item exists in the cache and retrieve was successful.
                 // 404: Does not exist => The item does not exist in the cache.
-                if (retrieveStatusCode != 200 && retrieveStatusCode != 404)
+                if (retrieveStatusCode != 200 && retrieveStatusCode != 404) 
                 {
                     Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
                     {
