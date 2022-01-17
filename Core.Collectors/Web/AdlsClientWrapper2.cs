@@ -1,21 +1,21 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Azure.DataLake.Store;
+using Azure.Storage.Files.DataLake;
 using System;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public interface IAdlsClient2
     {
-        public AdlsClient AdlsClient { get; }
+        public DataLakeServiceClient AdlsClient { get; }
     }
 
     public class AdlsClientWrapper2 : IAdlsClient2
     {
         public static readonly Uri AdlTokenAudience = new Uri(@"https://datalake.azure.net/");
 
-        public AdlsClient AdlsClient { get; private set; }
+        public DataLakeServiceClient AdlsClient { get; private set; }
 
         public AdlsClientWrapper2()
         {
@@ -23,6 +23,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             string adlsTenantId = Environment.GetEnvironmentVariable("AdlsTenantId2");
             string adlsIngestionApplicationId = Environment.GetEnvironmentVariable("AdlsIngestionApplicationId2");
             string adlsIngestionApplicationSecret = Environment.GetEnvironmentVariable("AdlsIngestionApplicationSecret2");
+
+            Uri serviceUri = new Uri(Environment.GetEnvironmentVariable("AdlsServiceUri2"));
+            string storageAccountName = Environment.GetEnvironmentVariable("storageAccountName2");
+            string storageAccountKey = Environment.GetEnvironmentVariable("storageAccountKey2");
 
             if (string.IsNullOrWhiteSpace(adlsIngestionApplicationId) || string.IsNullOrWhiteSpace(adlsIngestionApplicationSecret) || string.IsNullOrWhiteSpace(adlsAccount) || string.IsNullOrWhiteSpace(adlsTenantId))
             {
@@ -32,7 +36,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            this.AdlsClient = AdlsClientWrapper.InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
+            this.AdlsClient = AdlsClientWrapper.InitializeAdlsClient(serviceUri, storageAccountName, storageAccountKey);
         }
     }
 }

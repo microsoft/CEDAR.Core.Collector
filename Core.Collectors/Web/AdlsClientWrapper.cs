@@ -1,11 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Azure.DataLake.Store;
+using Azure.Storage;
+using Azure.Storage.Files.DataLake;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.Utility;
-using Microsoft.Rest;
-using Microsoft.Rest.Azure.Authentication;
 using Newtonsoft.Json.Linq;
 using System;
 
@@ -13,14 +12,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public interface IAdlsClient
     {
-        public AdlsClient AdlsClient { get; }
+        public DataLakeServiceClient AdlsClient { get; }
     }
 
     public class AdlsClientWrapper : IAdlsClient
     {
-        public static readonly Uri AdlTokenAudience = new Uri(@"https://datalake.azure.net/");
 
-        public AdlsClient AdlsClient { get; private set; }
+        public DataLakeServiceClient AdlsClient { get; private set; }
 
         // This is the old AdlsClientWrapper API.
         // The old API will be deprecated soon, but to protect our jobs from failing, we need to support both the old API and new API.
@@ -52,6 +50,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             JToken adlsTenantIdToken = adlsClientToken.SelectToken("TenantId");
             JToken adlsIngestionApplicationIdToken = adlsClientToken.SelectToken("IngestionApplicationId");
             JToken adlsIngestionApplicationSecretEnvironmentVariableToken = adlsClientToken.SelectToken("IngestionApplicationSecretEnvironmentVariable");
+            JToken serviceUriToken = adlsClientToken.SelectToken("ServiceUri");
+            JToken storageAccountNameToken = adlsClientToken.SelectToken("StorageAccountNameToken");
+            JToken storageAccountKeyToken = adlsClientToken.SelectToken("storageAccountKeyToken");
             if (adlsIngestionApplicationIdToken.IsNullOrWhiteSpace() || adlsIngestionApplicationSecretEnvironmentVariableToken.IsNullOrWhiteSpace() || adlsAccountToken.IsNullOrWhiteSpace() || adlsTenantIdToken.IsNullOrWhiteSpace())
             {
                 // Don't fail loading the function app environment if these variables are not provided. Instead don't initialize the ADLS client.
@@ -64,12 +65,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             string adlsTenantId = adlsTenantIdToken.Value<string>();
             string adlsIngestionApplicationId = adlsIngestionApplicationIdToken.Value<string>();
             string adlsIngestionApplicationSecret = Environment.GetEnvironmentVariable(adlsIngestionApplicationSecretEnvironmentVariableToken.Value<string>());
+            Uri serviceUri = serviceUriToken.Value<Uri>();
+            string storageAccountName = storageAccountNameToken.Value<string>();
+            string storageAccountKey = storageAccountKeyToken.Value<string>();
             if (string.IsNullOrWhiteSpace(adlsIngestionApplicationSecret))
             {
                 throw new FatalTerminalException($"For token '{adlsIngestionApplicationSecretEnvironmentVariableToken}', local.settings.json must provide an ADLS Ingestion Application Secret.");
             }
 
-            this.AdlsClient = InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
+            this.AdlsClient = InitializeAdlsClient(serviceUri, storageAccountName, storageAccountKey);
         }
 
         private void LoadSettingsFromEnvironmentVariables()
@@ -97,32 +101,22 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            this.AdlsClient = InitializeAdlsClient(adlsAccount, adlsTenantId, adlsIngestionApplicationId, adlsIngestionApplicationSecret);
+            Uri serviceUri = new Uri(Environment.GetEnvironmentVariable("AdlsServiceUri"));
+            string storageAccountName = Environment.GetEnvironmentVariable("storageAccountName");
+            string storageAccountKey = Environment.GetEnvironmentVariable("storageAccountKey");
+
+            this.AdlsClient = InitializeAdlsClient(serviceUri, storageAccountName, storageAccountKey);
         }
 
-        internal static AdlsClient InitializeAdlsClient(string adlsAccount, string adlsTenantId, string clientId, string secretKey)
+        internal static DataLakeServiceClient InitializeAdlsClient(Uri serviceUri, string storageAccountName, string storageAccountKey)
         {
-            ActiveDirectoryServiceSettings serviceSettings = ActiveDirectoryServiceSettings.Azure;
-            serviceSettings.TokenAudience = AdlTokenAudience;
 
-            ServiceClientCredentials adlCreds;
-            try
-            {
-                adlCreds = ApplicationTokenProvider.LoginSilentAsync(adlsTenantId, clientId, secretKey, serviceSettings).GetAwaiter().GetResult();
-            }
-            catch (Exception exception)
-            {
-                string clientIdPrefix = clientId;
-                if (Guid.TryParse(clientId, out Guid _))
-                {
-                    clientIdPrefix = clientId.Substring(0, 4);
-                }
+            StorageSharedKeyCredential sharedKeyCredential = new StorageSharedKeyCredential(storageAccountName, storageAccountKey);
 
-                throw new AggregateException($"Cannot get credentials for ADLS client. ADLSTenantId = {adlsTenantId}, ClientIdPrefix = {clientIdPrefix}, ADLSAccount = {adlsAccount}", exception);
-            }
+            DataLakeServiceClient serviceClient = new DataLakeServiceClient(serviceUri, sharedKeyCredential);
 
             // Marcel: ProcCount * 8 is usually the recommended number of threads to be used without deprecation of performance to to overscheduling and preemption. It supposed to account for usage and IO completion waits.
-            return AdlsClient.CreateClient(adlsAccount, adlCreds, Environment.ProcessorCount * 8);
+            return serviceClient;
         }
     }
 }

@@ -1,8 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
+using Azure.Storage.Queues;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
@@ -11,9 +10,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public class CloudQueueWrapper : IQueue
     {
-        private readonly CloudQueue queue;
+        private readonly QueueClient queue;
 
-        public CloudQueueWrapper(CloudQueue queue)
+        public CloudQueueWrapper(QueueClient queue)
         {
             this.queue = queue;
         }
@@ -26,12 +25,12 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         public Task PutMessageAsync(string message)
         {
-            return this.queue.AddMessageAsync(new CloudQueueMessage(message));
+            return this.queue.SendMessageAsync(message);
         }
 
         public Task PutMessageAsync(string message, TimeSpan timeToLive)
         {
-            return this.queue.AddMessageAsync(new CloudQueueMessage(message), timeToLive, null, new QueueRequestOptions(), new OperationContext());
+            return this.queue.SendMessageAsync(message, null, timeToLive);
         }
 
         public Task PutObjectAsJsonStringAsync(object obj, TimeSpan timeToLive)
