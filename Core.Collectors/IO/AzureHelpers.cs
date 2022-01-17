@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Sas;
@@ -55,6 +57,16 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return blob;
         }
 
+        public static async Task WriteToBlob(string container, string path, string content)
+        {
+            BlockBlobClient outputBlob = GetBlob(container, path);
+            Stream cloudBlobStream = await outputBlob.OpenWriteAsync(true).ConfigureAwait(false);
+            using (StreamWriter writer = new StreamWriter(cloudBlobStream, Encoding.UTF8))
+            {
+                await writer.WriteLineAsync(content).ConfigureAwait(false);
+            }
+        }
+        
         public static BlobContainerClient GetBlobContainer(string container, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             string connectionString = GetStorageAccount(storageConnectionEnvironmentVariable);
@@ -109,6 +121,18 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 result.AddRange(page.Values);
             }
 
+            return result;
+        }
+
+        public static async Task<List<QueueItem>> ListStorageQueuesAsync(string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            List<QueueItem> result = new List<QueueItem>();
+            string connectionString = GetStorageAccount(storageConnectionEnvironmentVariable);
+            QueueServiceClient queueServiceClient = new QueueServiceClient(connectionString);
+            await foreach (Page<QueueItem> page in queueServiceClient.GetQueuesAsync().AsPages())
+            {
+                result.AddRange(page.Values);
+            }
             return result;
         }
 
