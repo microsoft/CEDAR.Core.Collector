@@ -5,6 +5,7 @@
     <AssemblyName>Microsoft.CloudMine.Core.Collectors.Tests</AssemblyName>
     <RootNamespace>Microsoft.CloudMine.Core.Collectors.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
