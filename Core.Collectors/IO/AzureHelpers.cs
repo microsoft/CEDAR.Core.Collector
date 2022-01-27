@@ -111,7 +111,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return queue;
         }
 
-        public static async Task<List<QueueItem>> ListStorageQueuesAsync(string prefix, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        public static async Task<List<QueueClient>> ListStorageQueuesAsync(string prefix, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             List<QueueItem> result = new List<QueueItem>();
 
@@ -120,11 +120,17 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             await foreach (Page<QueueItem> page in queueServiceClient.GetQueuesAsync(prefix: prefix).AsPages()) {
                 result.AddRange(page.Values);
             }
+            List<QueueClient> clientResult = new List<QueueClient>();
+            foreach (QueueItem queueItem in result)
+            {
+                QueueClient queueClient = new QueueClient(connectionString, queueItem.Name);
+                clientResult.Add(queueClient);
+            }
 
-            return result;
+            return clientResult;
         }
 
-        public static async Task<List<QueueItem>> ListStorageQueuesAsync(string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        public static async Task<List<QueueClient>> ListStorageQueuesAsync(string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             List<QueueItem> result = new List<QueueItem>();
             string connectionString = GetStorageAccount(storageConnectionEnvironmentVariable);
@@ -133,7 +139,14 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             {
                 result.AddRange(page.Values);
             }
-            return result;
+            List<QueueClient> clientResult = new List<QueueClient>();
+            foreach (QueueItem queueItem in result)
+            {
+                QueueClient queueClient = new QueueClient(connectionString, queueItem.Name);
+                clientResult.Add(queueClient);
+            }
+
+            return clientResult;
         }
 
         public static async Task<TableClient> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
