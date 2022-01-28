@@ -7,7 +7,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Utility
     public static class Constants
     {
         public const string AppTokenAuth = "AppTokenAuth";
-        public const string SeperateExtensionScopes = "SeperateExtensionScopes";
+        public const string SeparateExtensionScopes = "SeparateExtensionScopes";
         public const string GrantType = "grant_type";
         public const string ClientId = "client_id";
         public const string ClientSecret = "client_secret";
