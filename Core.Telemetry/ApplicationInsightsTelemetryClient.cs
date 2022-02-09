@@ -3,7 +3,6 @@
 
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.CloudMine.Core.Auditing;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

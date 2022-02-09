@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.CloudMine.Core.Auditing;
+using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.Utility;

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace Microsoft.CloudMine.Core.Auditing
+namespace Microsoft.CloudMine.Core.Collectors.Telemetry
 {
     public interface ITelemetryClient
     {
