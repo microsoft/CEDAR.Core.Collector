@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using Microsoft.ApplicationInsights;
+using Microsoft.CloudMine.Core.Auditing;
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Error;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.CloudMine.Core.Collectors.Context;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using Microsoft.Azure.DataLake.Store;
+using Microsoft.Azure.DataLake.Store.FileTransfer;
+using Microsoft.CloudMine.Core.Auditing;
+using Microsoft.CloudMine.Core.Collectors.Context;
+using Microsoft.CloudMine.Core.Collectors.Error;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.DataLake.Store.FileTransfer;
-using Microsoft.CloudMine.Core.Collectors.Error;
-using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
 {

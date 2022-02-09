@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.IO;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Auditing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
