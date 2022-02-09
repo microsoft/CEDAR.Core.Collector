@@ -80,5 +80,3 @@ steps:
   displayName: 'Publish Artifact: SBOM'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/_manifest'
-
-- task: ComponentGovernanceComponentDetection@0
