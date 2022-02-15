@@ -11,8 +11,6 @@
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.3" />
     <PackageReference Include="Microsoft.Azure.Monitoring.DataPipe.Blob.IO" Version="4.5.0" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.3.1" />
-    <PackageReference Include="Microsoft.Cloud.InstrumentationFramework" Version="3.3.4.1" />
-    <PackageReference Include="Microsoft.Data.OData" Version="5.8.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
   </ItemGroup>
 </Project>
