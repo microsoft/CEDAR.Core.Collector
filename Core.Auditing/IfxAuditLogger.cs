@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using Microsoft.Cloud.InstrumentationFramework;
+using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Microsoft.CloudMine.Core.Telemetry
+namespace Microsoft.CloudMine.Core.Auditing
 {
     public class IfxAuditLogger : IAuditLogger
     {

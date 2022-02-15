@@ -1,8 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using Microsoft.Cloud.InstrumentationFramework;
+using Microsoft.CloudMine.Core.Telemetry;
 
-namespace Microsoft.CloudMine.Core.Telemetry
+namespace Microsoft.CloudMine.Core.Auditing
 {
     public interface IAuditLogger
     {
