@@ -4,7 +4,7 @@
 using Microsoft.ApplicationInsights;
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Error;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Telemetry;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
