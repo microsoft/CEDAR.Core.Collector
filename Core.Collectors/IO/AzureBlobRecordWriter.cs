@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System.IO;

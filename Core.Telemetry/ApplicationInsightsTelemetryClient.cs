@@ -3,24 +3,23 @@
 
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace Microsoft.CloudMine.Core.Collectors.Telemetry
+namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class ApplicationInsightsTelemetryClient : ITelemetryClient
     {
         private readonly TelemetryClient telemetryClient;
-        private readonly FunctionContext context;
+        private readonly string sessionId;
         private readonly ILogger logger;
 
-        public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, FunctionContext context, ILogger logger = null)
+        public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId, ILogger logger = null)
         {
             this.telemetryClient = telemetryClient;
-            this.context = context;
+            this.sessionId = sessionId;
             this.logger = logger;
         }
 
@@ -152,7 +151,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Telemetry
         {
             return new Dictionary<string, string>()
             {
-                { "SessionId", this.context.SessionId },
+                { "SessionId", this.sessionId },
             };
         }
     }
