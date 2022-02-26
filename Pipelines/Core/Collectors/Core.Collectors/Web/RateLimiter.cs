@@ -40,15 +40,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                            string organizationName,
                            ICache<RateLimitTableEntity> rateLimiterCache,
                            ITelemetryClient telemetryClient,
-                           bool expectRateLimitingHeaders)
-            : this(organizationId, organizationName, rateLimiterCache, telemetryClient, expectRateLimitingHeaders, cacheInvalidationFrequency: TimeSpan.FromTicks(0))
-        {
-        }
-
-        public RateLimiter(string organizationId,
-                           string organizationName,
-                           ICache<RateLimitTableEntity> rateLimiterCache,
-                           ITelemetryClient telemetryClient,
                            bool expectRateLimitingHeaders,
                            TimeSpan cacheInvalidationFrequency)
         {
@@ -173,7 +164,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         public async Task WaitIfNeededAsync(IAuthentication authentication)
         {
             TimeSpan elapsedSinceLastLookup = DateTime.UtcNow - this.cacheDateUtc;
-            if (this.cachedResult == null || elapsedSinceLastLookup >= cacheInvalidationFrequency)
+            if (this.cachedResult == null || elapsedSinceLastLookup >= this.cacheInvalidationFrequency)
             {
                 this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
                 this.cacheDateUtc = DateTime.UtcNow;
