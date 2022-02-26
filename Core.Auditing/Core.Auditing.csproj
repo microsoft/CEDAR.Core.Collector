@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+   <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Microsoft.CloudMine.Core.Auditing</RootNamespace>
+    <AssemblyName>Microsoft.CloudMine.Core.Auditing</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bond.Core.CSharp" Version="9.0.1" />
+    <PackageReference Include="Bond.CSharp" Version="9.0.1" />
+    <PackageReference Include="Bond.Runtime.CSharp" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Cloud.InstrumentationFramework" Version="3.3.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Telemetry\Core.Telemetry.csproj" />
+  </ItemGroup>
+</Project>

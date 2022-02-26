@@ -5,7 +5,7 @@ using Microsoft.Azure.DataLake.Store;
 using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.IO;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Telemetry;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

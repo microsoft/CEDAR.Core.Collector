@@ -7,7 +7,9 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
@@ -50,6 +52,16 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             CloudBlobContainer blobContainer = GetBlobContainer(container, storageConnectionEnvironmentVariable);
             CloudBlockBlob blob = blobContainer.GetBlockBlobReference(path);
             return blob;
+        }
+
+        public static async Task WriteToBlob(string container, string path, string content)
+        {
+            CloudBlockBlob outputBlob = GetBlob(container, path);
+            CloudBlobStream cloudBlobStream = await outputBlob.OpenWriteAsync().ConfigureAwait(false);
+            using (StreamWriter writer = new StreamWriter(cloudBlobStream, Encoding.UTF8))
+            {
+                await writer.WriteLineAsync(content).ConfigureAwait(false);
+            }
         }
 
         public static CloudBlobContainer GetBlobContainer(string container, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
@@ -107,6 +119,24 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             do
             {
                 QueueResultSegment queueResultSegment = await queueClient.ListQueuesSegmentedAsync(prefix, continuationToken).ConfigureAwait(false);
+                continuationToken = queueResultSegment.ContinuationToken;
+
+                result.AddRange(queueResultSegment.Results);
+            } while (continuationToken != null);
+
+            return result;
+        }
+
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        {
+            List<CloudQueue> result = new List<CloudQueue>();
+
+            CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            QueueContinuationToken continuationToken = null;
+            do
+            {
+                QueueResultSegment queueResultSegment = await queueClient.ListQueuesSegmentedAsync(continuationToken).ConfigureAwait(false);
                 continuationToken = queueResultSegment.ContinuationToken;
 
                 result.AddRange(queueResultSegment.Results);
