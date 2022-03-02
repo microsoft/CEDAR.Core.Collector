@@ -59,7 +59,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenGeneration, AuditOptionalProperties auditOptionalProperties = null)
         {
             LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
         }
@@ -67,6 +67,11 @@ namespace Microsoft.CloudMine.Core.Auditing
         public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
         {
             LogAuthorizationAuditEvent(telemetryClient, operationResult, FetchCertificateOperation, targetResources, callerIdentities, auditOptionalProperties);
+        }
+
+        public void LogTokenGenerationEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
+        {
+            LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
         }
 
         private void LogAuthorizationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationName, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties)
@@ -115,6 +120,11 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
 
             return ipAddress;
+        }
+
+        public void LogTokenGenerationEvent(ITelemetryClient telemetryClient, object operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities)
+        {
+            throw new NotImplementedException();
         }
     }
 }
