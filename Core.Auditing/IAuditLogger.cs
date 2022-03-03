@@ -11,9 +11,8 @@ namespace Microsoft.CloudMine.Core.Auditing
 
         void LogApplicationAuditEvent(ITelemetryClient telemetryClient, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null);
 
-        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenGeneration, AuditOptionalProperties auditOptionalProperties = null);
+        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName, AuditOptionalProperties auditOptionalProperties = null);
 
         void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null);
-        void LogTokenGenerationEvent(ITelemetryClient telemetryClient, object operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities);
     }
 }

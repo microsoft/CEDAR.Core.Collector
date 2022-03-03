@@ -59,9 +59,9 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenGeneration, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName, AuditOptionalProperties auditOptionalProperties = null)
         {
-            LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
+            LogAuthorizationAuditEvent(telemetryClient, operationResult, operationName, targetResources, callerIdentities, auditOptionalProperties);
         }
 
         public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
@@ -120,11 +120,6 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
 
             return ipAddress;
-        }
-
-        public void LogTokenGenerationEvent(ITelemetryClient telemetryClient, object operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities)
-        {
-            throw new NotImplementedException();
         }
     }
 }
