@@ -12,7 +12,7 @@ namespace Microsoft.CloudMine.Core.Auditing
     public class IfxAuditLogger : IAuditLogger
     {
         private bool alreadyLoggedPerSession = false;
-        private const string TokenGenerationOperation = "GenerateToken";
+        private const string TokenGenerationOperation = "TokenGeneration";
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";
 
@@ -59,9 +59,9 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType, AuditOptionalProperties auditOptionalProperties = null)
         {
-            LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
+            LogAuthorizationAuditEvent(telemetryClient, operationResult, tokenType + TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
         }
 
         public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
