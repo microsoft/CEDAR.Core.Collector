@@ -65,6 +65,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
         }
 
+        public void Remove_Exception(Exception exception)
+        {
+            this.exceptions.Remove(exception);
+        }
+
         protected abstract Task<TEndpointProgressTableEntity> RetrieveAsync(TEndpointProgressTableEntity progressRecord);
 
         protected abstract Task CacheAsync(TEndpointProgressTableEntity progressRecord);
