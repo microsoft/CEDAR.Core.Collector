@@ -96,7 +96,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
 
-        private static string FetchIPAddress()
+        public static string FetchIPAddress()
         {
             IPAddress[] addresses = Dns.GetHostAddresses(Environment.MachineName);
             string ipAddress = null;
