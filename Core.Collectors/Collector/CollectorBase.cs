@@ -63,12 +63,34 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             while (batchingHttpRequest.HasNext && counter < maxPageCount && !haltCollection)
             {
                 counter++;
-                HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
-
-                // response would be null if there was an exception while getting the response and the exception is allow-listed.
-                if (response == null || response.StatusCode == HttpStatusCode.NoContent)
+                HttpResponseMessage response = null;
+                try
                 {
-                    // Responses with empty bodies and responses with allow-listed exceptions cannot be deserialized and are not expected to have continuations
+                    response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
+                }
+                catch(Exception requestException)
+                {
+                    foreach (HttpExceptionSignature allowlistedException in collectionNode.AllowlistedExceptions)
+                    {
+                        if (allowlistedException.Matches(requestException))
+                        {
+                            Dictionary<string, string> allowlistedExceptionProperties = new Dictionary<string, string>()
+                            {
+                                { "RequestUrl", batchingHttpRequest.CurrentUrl },
+                                { "ExceptionMessage", requestException.Message },
+                            };
+                            this.telemetryClient.TrackEvent("AllowlistedException", allowlistedExceptionProperties);
+                            await allowlistedException.Handle();
+                            return false;
+                        }
+                    }
+
+                    this.ThrowFatalException(batchingHttpRequest, requestException);
+                }
+
+                if (response.StatusCode == HttpStatusCode.NoContent)
+                {
+                    // Responses with empty bodies cannot be deserialized and are not expected to have continuations
                     break;
                 }
 
@@ -149,6 +171,31 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
 
             return batchingHttpRequest.HasNext;
+        }
+
+        private void ThrowFatalException(IBatchingHttpRequest batchingRequest, Exception requestException)
+        {
+            string identityToTrack = batchingRequest.PreviousIdentity;
+            string requestUrl = batchingRequest.CurrentUrl;
+            int attemptIndex = batchingRequest.
+            bool guidIdentity = Guid.TryParse(identityToTrack, out Guid _);
+            if (guidIdentity)
+            {
+                identityToTrack = identityToTrack.Substring(0, 4); // For security reasons, if the identity is a GUID, only capture the first 4 characters in the telemetry.
+            }
+
+            Exception fatalException = new FatalException($"Request to url '{requestUrl}' failed with exception.", requestException);
+            Dictionary<string, string> properties = new Dictionary<string, string>()
+            {
+                { "Url", requestUrl },
+                { "Identity", identityToTrack },
+                { "AttemptIndex", exceptionCount.ToString() },
+                { "ExceptionMessage", requestException.Message },
+                { "Retried", false.ToString() },
+                { "Fatal", true.ToString() },
+            };
+            this.telemetryClient.TrackException(fatalException, "Web request failed.", properties);
+            throw fatalException;
         }
 
         private bool DetectLooping(IEnumerable<JObject> records)
