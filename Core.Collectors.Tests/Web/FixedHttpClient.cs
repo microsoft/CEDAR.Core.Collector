@@ -32,6 +32,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             {
                 StatusCode = responseStatusCode,
                 Content = new StringContent(responseMessage),
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
             };
             this.requestToResponseMap.Add(requestUrl, response);
         }

@@ -85,7 +85,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                         }
                     }
 
-                    this.ThrowFatalException(batchingHttpRequest, requestException);
+                    throw; // TODO: Fatal Exception??
                 }
 
                 if (response.StatusCode == HttpStatusCode.NoContent)
@@ -159,44 +159,44 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 }
                 else
                 {
+                    foreach (HttpResponseSignature responseSignature in collectionNode.AllowlistedResponses)
+                    {
+                        if (await responseSignature.Matches(response).ConfigureAwait(false))
+                        {
+                            Dictionary<string, string> allowlistedResponseProperties = new Dictionary<string, string>()
+                            {
+                                { "RequestUrl", response.RequestMessage.RequestUri.ToString() },
+                                { "ResponseStatusCode", response.StatusCode.ToString() },
+                                { "ResponseContent", await response.Content.ReadAsStringAsync() },
+                            };
+
+                            this.telemetryClient.TrackEvent("AllowlistedResponse", allowlistedResponseProperties);
+
+                            return false;
+                        }
+                    }
+
+                    string requestUrl = response.RequestMessage.RequestUri.ToString();
+                    string responseStatusCode = response.StatusCode.ToString();
                     string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    Exception fatalException = new FatalException($"Request to url '{requestUrl}' failed with status code: '{responseStatusCode}'. Response content: '{responseContent}'.");
                     Dictionary<string, string> properties = new Dictionary<string, string>()
                     {
-                        { "Url", batchingHttpRequest.CurrentUrl },
-                        { "ResponseStatusCode", response.StatusCode.ToString() },
-                        { "ResponseContent", responseContent },
+                        { "Url", requestUrl },
+                        { "ResponseContent", await response.Content.ReadAsStringAsync().ConfigureAwait(false) },
+                        { "ResponseStatusCode", responseStatusCode.ToString() },
+                        { "Retried", false.ToString() },
+                        { "Fatal", true.ToString() },
                     };
-                    this.telemetryClient.TrackEvent("FailedExternalRequest", properties);
+                    this.telemetryClient.TrackException(fatalException, "Web request failed.", properties);
+                    throw fatalException;
                 }
             }
 
             return batchingHttpRequest.HasNext;
         }
 
-        private void ThrowFatalException(IBatchingHttpRequest batchingRequest, Exception requestException)
-        {
-            string identityToTrack = batchingRequest.PreviousIdentity;
-            string requestUrl = batchingRequest.CurrentUrl;
-            int attemptIndex = batchingRequest.
-            bool guidIdentity = Guid.TryParse(identityToTrack, out Guid _);
-            if (guidIdentity)
-            {
-                identityToTrack = identityToTrack.Substring(0, 4); // For security reasons, if the identity is a GUID, only capture the first 4 characters in the telemetry.
-            }
-
-            Exception fatalException = new FatalException($"Request to url '{requestUrl}' failed with exception.", requestException);
-            Dictionary<string, string> properties = new Dictionary<string, string>()
-            {
-                { "Url", requestUrl },
-                { "Identity", identityToTrack },
-                { "AttemptIndex", exceptionCount.ToString() },
-                { "ExceptionMessage", requestException.Message },
-                { "Retried", false.ToString() },
-                { "Fatal", true.ToString() },
-            };
-            this.telemetryClient.TrackException(fatalException, "Web request failed.", properties);
-            throw fatalException;
-        }
 
         private bool DetectLooping(IEnumerable<JObject> records)
         {

@@ -1,10 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
@@ -24,6 +27,20 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         {
             this.statusCode = statusCode;
             this.matcher = matcher;
+        }
+
+        public async Task<bool> Matches(HttpResponseMessage response, string responseMessagePath = "$.message")
+        {
+            try
+            {
+                string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                JObject responseContentObject = JObject.Parse(responseContent);
+                return this.Matches(response.StatusCode, responseContentObject, responseMessagePath);
+            }
+            catch (JsonReaderException)
+            {
+                return false;
+            }
         }
 
         public bool Matches(HttpStatusCode statusCode, JObject responseContent, string responseMessagePath = "$.message")
