@@ -16,17 +16,20 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         private readonly HttpStatusCode statusCode;
         private readonly Regex responseMessageRegex;
         private readonly Func<JObject, bool> matcher;
+        private readonly Func<Task> handler;
 
-        public HttpResponseSignature(HttpStatusCode statusCode, string responseMessageRegex)
+        public HttpResponseSignature(HttpStatusCode statusCode, string responseMessageRegex, Func<Task> handler = null)
         {
             this.statusCode = statusCode;
             this.responseMessageRegex = new Regex($"^{responseMessageRegex}$", RegexOptions.Compiled | RegexOptions.Multiline);
+            this.handler = handler;
         }
 
-        public HttpResponseSignature(HttpStatusCode statusCode, Func<JObject, bool> matcher)
+        public HttpResponseSignature(HttpStatusCode statusCode, Func<JObject, bool> matcher, Func<Task> handler = null)
         {
             this.statusCode = statusCode;
             this.matcher = matcher;
+            this.handler = handler;
         }
 
         public async Task<bool> Matches(HttpResponseMessage response, string responseMessagePath = "$.message")
@@ -52,6 +55,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
             string responseMessage = responseContent.SelectToken(responseMessagePath).Value<string>();
             return this.statusCode == statusCode && this.responseMessageRegex.IsMatch(responseMessage);
+        }
+
+        public Task Handle()
+        {
+            if (null != this.handler)
+            {
+                return this.handler.Invoke();
+            }
+            return Task.CompletedTask;
         }
     }
 }

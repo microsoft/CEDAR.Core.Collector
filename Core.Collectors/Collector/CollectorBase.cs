@@ -74,18 +74,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     {
                         if (allowlistedException.Matches(requestException))
                         {
-                            Dictionary<string, string> allowlistedExceptionProperties = new Dictionary<string, string>()
-                            {
-                                { "RequestUrl", batchingHttpRequest.CurrentUrl },
-                                { "ExceptionMessage", requestException.Message },
-                            };
-                            this.telemetryClient.TrackEvent("AllowlistedException", allowlistedExceptionProperties);
+                            LogAllowListException(batchingHttpRequest.CurrentUrl, requestException);
                             await allowlistedException.Handle();
                             return false;
                         }
                     }
 
-                    throw; // TODO: Fatal Exception??
+                    LogAndThrowRequestException(batchingHttpRequest.CurrentUrl, requestException);
                 }
 
                 if (response.StatusCode == HttpStatusCode.NoContent)
@@ -163,40 +158,42 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     {
                         if (await responseSignature.Matches(response).ConfigureAwait(false))
                         {
-                            Dictionary<string, string> allowlistedResponseProperties = new Dictionary<string, string>()
-                            {
-                                { "RequestUrl", response.RequestMessage.RequestUri.ToString() },
-                                { "ResponseStatusCode", response.StatusCode.ToString() },
-                                { "ResponseContent", await response.Content.ReadAsStringAsync() },
-                            };
-
-                            this.telemetryClient.TrackEvent("AllowlistedResponse", allowlistedResponseProperties);
-
+                            await this.LogAllowListedResponse(response).ConfigureAwait(false);
+                            await responseSignature.Handle();
                             return false;
                         }
                     }
 
-                    string requestUrl = response.RequestMessage.RequestUri.ToString();
-                    string responseStatusCode = response.StatusCode.ToString();
-                    string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    Exception fatalException = new FatalException($"Request to url '{requestUrl}' failed with status code: '{responseStatusCode}'. Response content: '{responseContent}'.");
-                    Dictionary<string, string> properties = new Dictionary<string, string>()
-                    {
-                        { "Url", requestUrl },
-                        { "ResponseContent", await response.Content.ReadAsStringAsync().ConfigureAwait(false) },
-                        { "ResponseStatusCode", responseStatusCode.ToString() },
-                        { "Retried", false.ToString() },
-                        { "Fatal", true.ToString() },
-                    };
-                    this.telemetryClient.TrackException(fatalException, "Web request failed.", properties);
-                    throw fatalException;
+                    await this.LogAndThrowErrorResponse(response).ConfigureAwait(false);
                 }
             }
 
             return batchingHttpRequest.HasNext;
         }
 
+        private void LogAllowListException(string requestUrl, Exception requestException)
+        {
+            Dictionary<string, string> allowlistedExceptionProperties = new Dictionary<string, string>()
+            {
+                { "RequestUrl", requestUrl },
+                { "ExceptionMessage", requestException.Message },
+            };
+            this.telemetryClient.TrackEvent("AllowlistedException", allowlistedExceptionProperties);
+        }
+
+        private void LogAndThrowRequestException(string requestUrl, Exception requestException)
+        {
+            Exception fatalException = new FatalException($"Request to url '{requestUrl}' threw an exception.", requestException);
+
+            Dictionary<string, string> properties = new Dictionary<string, string>()
+            {
+                { "Url", requestUrl },
+                { "Fatal", true.ToString() },
+            };
+
+            this.telemetryClient.TrackException(fatalException, "Web request exception.", properties);
+            throw fatalException;
+        }
 
         private bool DetectLooping(IEnumerable<JObject> records)
         {
@@ -239,6 +236,38 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
             // All records match to the previous record, incidcating that the response did not change either.
             return true;
+        }
+
+        private async Task LogAllowListedResponse(HttpResponseMessage response)
+        {
+            Dictionary<string, string> allowlistedResponseProperties = new Dictionary<string, string>()
+            {
+                { "RequestUrl", response.RequestMessage.RequestUri.ToString() },
+                { "ResponseStatusCode", response.StatusCode.ToString() },
+                { "ResponseContent", await response.Content.ReadAsStringAsync().ConfigureAwait(false) },
+            };
+
+            this.telemetryClient.TrackEvent("AllowlistedResponse", allowlistedResponseProperties);
+        }
+
+        private async Task LogAndThrowErrorResponse(HttpResponseMessage response)
+        {
+            string requestUrl = response.RequestMessage.RequestUri.ToString();
+            string responseStatusCode = response.StatusCode.ToString();
+            string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            Exception fatalException = new FatalException($"Request to url '{requestUrl}' failed with status code: '{responseStatusCode}'. Response content: '{responseContent}'.");
+
+            Dictionary<string, string> properties = new Dictionary<string, string>()
+            {
+                { "Url", requestUrl },
+                { "ResponseContent", responseContent },
+                { "ResponseStatusCode", responseStatusCode },
+                { "Fatal", true.ToString() },
+            };
+
+            this.telemetryClient.TrackException(fatalException, "Web request failed.", properties);
+            throw fatalException;
         }
 
         private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record)
