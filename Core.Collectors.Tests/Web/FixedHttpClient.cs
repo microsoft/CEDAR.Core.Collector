@@ -37,6 +37,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             this.requestToResponseMap.Add(requestUrl, response);
         }
 
+        public void AddResponse(string requestUrl, string body, HttpStatusCode responseStatusCode, string responseMessage)
+        {
+            HttpResponseMessage response = new HttpResponseMessage()
+            {
+                StatusCode = responseStatusCode,
+                Content = new StringContent(responseMessage),
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUrl)
+            };
+            this.requestToResponseMap.Add(requestUrl + body, response);
+        }
+
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
         {
             if (this.requestToResponseMap.TryGetValue(requestUrl, out HttpResponseMessage result))
@@ -64,7 +75,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out HttpResponseMessage result))
+            if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage result))
+            {
+                return Task.FromResult(result);
+            }
+
+            if (this.requestToResponseMap.TryGetValue(requestUrl, out result))
             {
                 return Task.FromResult(result);
             }
