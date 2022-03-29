@@ -63,8 +63,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             while (batchingHttpRequest.HasNext && counter < maxPageCount && !haltCollection)
             {
                 counter++;
-                HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
+                RequestResult result = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
 
+                if (!result.IsSuccess())
+                {
+                    foreach(T allowListCollectionNode in result.allowListStatus.Continuation())
+                    {
+                        await this.ProcessAsync(allowListCollectionNode).ConfigureAwait(false);
+                    }
+                    return false;
+                }
+
+                HttpResponseMessage response = result.response;
                 // response would be null if there was an exception while getting the response and the exception is allow-listed.
                 if (response == null || response.StatusCode == HttpStatusCode.NoContent)
                 {
