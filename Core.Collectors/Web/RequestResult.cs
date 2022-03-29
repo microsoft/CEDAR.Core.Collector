@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+
+using System.Net.Http;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
