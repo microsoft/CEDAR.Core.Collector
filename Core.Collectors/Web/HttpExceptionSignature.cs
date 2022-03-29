@@ -31,7 +31,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public List<CollectionNode> Continuation()
         {
-            if(continuation == null)
+            if (continuation == null)
             {
                 return new List<CollectionNode>();
             }
