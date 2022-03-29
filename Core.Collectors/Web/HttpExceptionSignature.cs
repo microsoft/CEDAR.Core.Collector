@@ -7,32 +7,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
-{ 
+{
     public class HttpExceptionSignature : IAllowListStatus
     {
-        public static HttpExceptionSignature RequestTimeoutException(Func<List<CollectionNode>> continuation = null)
+        public static readonly HttpExceptionSignature RequestTimeoutException = new HttpExceptionSignature(exception =>
         {
-            Func<Exception, bool> matcher = exception =>
-            {
-                Type exceptionType = exception.GetType();
-                return exceptionType == typeof(TaskCanceledException) && exception.Message.Equals("The operation was canceled.");
-            };
-
-            return new HttpExceptionSignature(matcher, continuation);
-        }
+            Type exceptionType = exception.GetType();
+            return exceptionType == typeof(TaskCanceledException) && exception.Message.Equals("The operation was canceled.");
+        });
 
         private readonly Func<Exception, bool> matcher;
         private readonly Func<List<CollectionNode>> continuation;
-
         public HttpExceptionSignature(Func<Exception, bool> matcher, Func<List<CollectionNode>> continuation = null)
         {
             this.matcher = matcher;
-
-            if (continuation == null)
-            {
-                continuation = () => new List<CollectionNode>();
-            }
-
             this.continuation = continuation;
         }
 
@@ -43,7 +31,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public List<CollectionNode> Continuation()
         {
-            return this.continuation.Invoke();
+            if(continuation == null)
+            {
+                return new List<CollectionNode>();
+            }
+
+            return this.continuation();
         }
     }
 }

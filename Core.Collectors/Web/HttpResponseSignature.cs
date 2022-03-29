@@ -15,7 +15,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         private readonly HttpStatusCode statusCode;
         private readonly Regex responseMessageRegex;
         private readonly Func<JObject, bool> matcher;
-        private readonly List<CollectionNode> continuation;
+        private readonly Func<List<CollectionNode>> continuation;
 
         public HttpResponseSignature(HttpStatusCode statusCode, string responseMessageRegex)
         {
@@ -23,16 +23,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             this.responseMessageRegex = new Regex($"^{responseMessageRegex}$", RegexOptions.Compiled | RegexOptions.Multiline);
         }
 
-        public HttpResponseSignature(HttpStatusCode statusCode, Func<JObject, bool> matcher, List<CollectionNode> continuation = null)
+        public HttpResponseSignature(HttpStatusCode statusCode, Func<JObject, bool> matcher, Func<List<CollectionNode>> continuation = null)
         {
             this.statusCode = statusCode;
             this.matcher = matcher;
-
-            if (continuation == null)
-            {
-                continuation = new List<CollectionNode>();
-            }
-
             this.continuation = continuation;
         }
 
@@ -49,7 +43,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public List<CollectionNode> Continuation()
         {
-            return this.continuation;
+            if (this.continuation == null)
+            {
+                return new List<CollectionNode>();
+            }
+
+            return this.continuation();
         }
     }
 }

@@ -1,14 +1,10 @@
-﻿using Microsoft.CloudMine.Core.Collectors.Collector;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Net.Http;
 
 namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public class RequestResult
     {
         public HttpResponseMessage response;
-        //public Func<List<CollectionNode>> continuation;
         public IAllowListStatus allowListStatus;
 
         public RequestResult(HttpResponseMessage response)

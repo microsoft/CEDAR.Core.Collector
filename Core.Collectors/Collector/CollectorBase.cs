@@ -67,11 +67,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                 if (!result.IsSuccess())
                 {
-                    foreach(T allowListCollectionNode in result.allowListStatus.Continuation())
+                    foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation())
                     {
-                        await this.ProcessAsync(allowListCollectionNode).ConfigureAwait(false);
+                        if (allowListCollectionNode is T)
+                        {
+                            await this.ProcessAsync((T) allowListCollectionNode).ConfigureAwait(false);
+                        }
                     }
-                    return false;
+                    break;
                 }
 
                 HttpResponseMessage response = result.response;
