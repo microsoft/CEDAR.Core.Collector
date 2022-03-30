@@ -59,7 +59,7 @@ steps:
   inputs:
     command: test
     projects: 'CEDAR.GitHub.Collector\GitHub.Collectors.sln'
-    arguments: '--configuration $(buildConfiguration) --no-restore --collect "Code coverage"'
+    arguments: '-c Release --no-restore --collect "Code coverage"'
 
 - task: ArchiveFiles@2
   displayName: 'Archive CEDAR.GitHub.Collector'
