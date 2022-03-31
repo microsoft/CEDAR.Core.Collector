@@ -49,6 +49,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             }
 
             return this.continuation(failedUrl);
+
         }
     }
 }

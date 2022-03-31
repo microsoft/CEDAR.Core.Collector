@@ -18,6 +18,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         private readonly Func<Exception, bool> matcher;
         private readonly Func<string, List<CollectionNode>> continuation;
+
         public HttpExceptionSignature(Func<Exception, bool> matcher, Func<string, List<CollectionNode>> continuation = null)
         {
             this.matcher = matcher;
