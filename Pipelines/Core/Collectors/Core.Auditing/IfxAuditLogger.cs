@@ -12,9 +12,11 @@ namespace Microsoft.CloudMine.Core.Auditing
     public class IfxAuditLogger : IAuditLogger
     {
         private bool alreadyLoggedPerSession = false;
-        private const string TokenGenerationOperation = "GenerateToken";
+        private const string TokenGenerationOperation = "TokenGeneration";
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";
+
+        
 
         /// <summary>
         /// Initializes audit logging.
@@ -59,9 +61,9 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string TokenType, AuditOptionalProperties auditOptionalProperties = null)
         {
-            LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
+            LogAuthorizationAuditEvent(telemetryClient, operationResult, TokenType + TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
         }
 
         public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
@@ -96,7 +98,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
 
-        private static string FetchIPAddress()
+        public static string FetchIPAddress()
         {
             IPAddress[] addresses = Dns.GetHostAddresses(Environment.MachineName);
             string ipAddress = null;
@@ -115,6 +117,28 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
 
             return ipAddress;
+        }
+
+        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
+        {
+            string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            if (string.IsNullOrEmpty(webAppName))
+            {
+                telemetryClient?.LogWarning($"[{nameof(LogRequest)}] Web app name isn't found from environment variable.");
+                webAppName = DefaultWebAppName; // Set to default web app name.
+            }
+
+            auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Other);
+            auditMandatoryProperties.AddCallerIdentity(new CallerIdentity(CallerIdentityType.ApplicationID, webAppName));
+            foreach (CallerIdentity callerIdentity in callerIdentities)
+            {
+                auditMandatoryProperties.AddCallerIdentity(callerIdentity);
+            }
+            auditMandatoryProperties.AddTargetResources(targetResources);
+            auditMandatoryProperties.ResultType = operationResult;
+
+            // And the most important part, calling the Audit functions: 
+            this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
     }
 }
