@@ -82,7 +82,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             {
                 return Task.FromResult(result);
             }
-             
+            
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
         }
     }
