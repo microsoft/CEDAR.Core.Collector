@@ -17,8 +17,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         });
 
         private readonly Func<Exception, bool> matcher;
-        private readonly Func<List<CollectionNode>> continuation;
-        public HttpExceptionSignature(Func<Exception, bool> matcher, Func<List<CollectionNode>> continuation = null)
+        private readonly Func<string, List<CollectionNode>> continuation;
+        public HttpExceptionSignature(Func<Exception, bool> matcher, Func<string, List<CollectionNode>> continuation = null)
         {
             this.matcher = matcher;
             this.continuation = continuation;
@@ -29,14 +29,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return matcher.Invoke(exception);
         }
 
-        public List<CollectionNode> Continuation()
+        public List<CollectionNode> Continuation(string failedUrl)
         {
             if (continuation == null)
             {
                 return new List<CollectionNode>();
             }
 
-            return this.continuation();
+            return this.continuation(failedUrl);
         }
     }
 }

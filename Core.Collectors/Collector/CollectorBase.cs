@@ -67,7 +67,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                 if (!result.IsSuccess())
                 {
-                    foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation())
+                    foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(batchingHttpRequest.CurrentUrl))
                     {
                         if (allowListCollectionNode is T)
                         {

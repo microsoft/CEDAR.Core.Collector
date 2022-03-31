@@ -7,6 +7,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public interface  IAllowListStatus
     {
-        public List<CollectionNode> Continuation();
+        public List<CollectionNode> Continuation(string failedUrl);
     }
 }
