@@ -16,6 +16,8 @@ namespace Microsoft.CloudMine.Core.Auditing
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";
 
+        
+
         /// <summary>
         /// Initializes audit logging.
         /// </summary>
@@ -116,8 +118,7 @@ namespace Microsoft.CloudMine.Core.Auditing
 
             return ipAddress;
         }
-
-        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties)
+        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))

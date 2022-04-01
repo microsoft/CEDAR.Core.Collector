@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.ApplicationInsights;
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         public static readonly TimeSpan HttpTimeout = TimeSpan.FromMinutes(10);
 
         private readonly HttpClient httpClient;
+        protected TelemetryClient TelemetryClient { get; }
 
         public HttpClientWrapper()
         {
@@ -59,7 +61,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             }
 
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
             string authenticationHeader = await authentication.GetAuthorizationHeaderAsync().ConfigureAwait(false);
             request.Headers.Authorization = new AuthenticationHeaderValue(authentication.Schema, authenticationHeader);
             foreach (KeyValuePair<string, string> additionalHeader in authentication.AdditionalWebRequestHeaders)
