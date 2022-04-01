@@ -5,7 +5,7 @@ using Microsoft.CloudMine.Core.Telemetry;
 
 namespace Microsoft.CloudMine.Core.Auditing
 {
-    public interface IAuditLogger
+    public interface IAuditLogger : ITracker
     {
         void Initialize(string tenantIdentity, string roleIdentity);
 
@@ -14,5 +14,7 @@ namespace Microsoft.CloudMine.Core.Auditing
         void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType, AuditOptionalProperties auditOptionalProperties = null);
 
         void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null);
+
+        void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties);
     }
 }
