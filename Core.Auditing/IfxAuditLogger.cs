@@ -115,7 +115,6 @@ namespace Microsoft.CloudMine.Core.Auditing
                     break;
                 }
             }
-
             return ipAddress;
         }
         public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
@@ -123,7 +122,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))
             {
-                telemetryClient?.LogWarning($"[{nameof(LogRequest)}] Web app name isn't found from environment variable.");
+                telemetryClient.LogWarning($"[{nameof(LogRequest)}] Web app name isn't found from environment variable.");
                 webAppName = DefaultWebAppName; // Set to default web app name.
             }
 
