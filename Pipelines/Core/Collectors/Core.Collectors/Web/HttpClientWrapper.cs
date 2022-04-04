@@ -17,7 +17,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         public static readonly TimeSpan HttpTimeout = TimeSpan.FromMinutes(10);
 
         private readonly HttpClient httpClient;
-        protected TelemetryClient TelemetryClient { get; }
 
         public HttpClientWrapper()
         {
