@@ -6,19 +6,20 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public class RequestResult
     {
+        public HttpRequestMessage request;
         public HttpResponseMessage response;
         public IAllowListStatus allowListStatus;
 
-        public RequestResult(HttpResponseMessage response)
-                : this(response, null)
+        public RequestResult(HttpRequestMessage requestMessage, HttpResponseMessage response)
+                : this(requestMessage, response, null)
         { }
 
 
-        public RequestResult(IAllowListStatus allowListStatus)
-                : this(null, allowListStatus)
+        public RequestResult(HttpRequestMessage requestMessage, IAllowListStatus allowListStatus)
+                : this(requestMessage, null, allowListStatus)
         { }
 
-        private RequestResult(HttpResponseMessage response, IAllowListStatus allowListStatus)
+        private RequestResult(HttpRequestMessage requestMessage, HttpResponseMessage response, IAllowListStatus allowListStatus)
         {
             this.response = response;
             this.allowListStatus = allowListStatus;
