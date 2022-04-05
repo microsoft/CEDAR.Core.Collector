@@ -10,8 +10,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         public HttpResponseMessage response { get; private set; }
         public IAllowListStatus allowListStatus { get; private set; }
 
-        public RequestResult(HttpRequestMessage requestMessage, HttpResponseMessage response)
-                : this(requestMessage, response, null)
+        public RequestResult(HttpResponseMessage response)
+                : this(response.RequestMessage, response, null)
         { }
 
 
