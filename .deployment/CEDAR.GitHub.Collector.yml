@@ -10,7 +10,7 @@ resources:
   repositories:
   - repository: CEDAR.GitHub.Collector
     type: github
-    endpoint: microsoft/CEDAR
+    endpoint: 'CloudMine (CEDAR) validation'
     name: microsoft/CEDAR.GitHub.Collector
     ref: main
 
