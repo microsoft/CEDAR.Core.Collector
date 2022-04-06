@@ -5,7 +5,7 @@ using Microsoft.CloudMine.Core.Telemetry;
 
 namespace Microsoft.CloudMine.Core.Auditing
 {
-    public interface IAuditLogger : ITracker
+    public interface IAuditLogger
     {
         void Initialize(string tenantIdentity, string roleIdentity);
 
