@@ -94,6 +94,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditMandatoryProperties.AddTargetResources(targetResources);
             auditMandatoryProperties.ResultType = operationResult;
 
+            //auditOptionalProperties.CallerDisplayName = 
             // And the most important part, calling the Audit functions: 
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
@@ -117,7 +118,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
             return ipAddress;
         }
-        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogRequest(ITelemetryClient telemetryClient, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))
@@ -125,17 +126,18 @@ namespace Microsoft.CloudMine.Core.Auditing
                 telemetryClient.LogWarning($"[{nameof(LogRequest)}] Web app name isn't found from environment variable.");
                 webAppName = DefaultWebAppName; // Set to default web app name.
             }
-
-            auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Other);
             auditMandatoryProperties.AddCallerIdentity(new CallerIdentity(CallerIdentityType.ApplicationID, webAppName));
+            //add audit category
+            auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Other);
+            //add caller identities
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
                 auditMandatoryProperties.AddCallerIdentity(callerIdentity);
             }
+            //add target resources
             auditMandatoryProperties.AddTargetResources(targetResources);
-            auditMandatoryProperties.ResultType = operationResult;
 
-            // And the most important part, calling the Audit functions: 
+            // And the most important part, calling the Audit function: 
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
     }
