@@ -15,9 +15,6 @@ namespace Microsoft.CloudMine.Core.Auditing
         private const string TokenGenerationOperation = "TokenGeneration";
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";
-
-        
-
         /// <summary>
         /// Initializes audit logging.
         /// </summary>
