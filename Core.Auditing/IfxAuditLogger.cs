@@ -91,7 +91,6 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditMandatoryProperties.AddTargetResources(targetResources);
             auditMandatoryProperties.ResultType = operationResult;
 
-            //auditOptionalProperties.CallerDisplayName = 
             // And the most important part, calling the Audit functions: 
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
