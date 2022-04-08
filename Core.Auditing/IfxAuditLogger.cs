@@ -79,6 +79,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Authorization);
             LogAuditEvent(telemetryClient, targetResources, callerIdentities, auditMandatoryProperties, auditOptionalProperties);
         }
+
         public void LogRequest(ITelemetryClient telemetryClient, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
         {
             auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Other);
