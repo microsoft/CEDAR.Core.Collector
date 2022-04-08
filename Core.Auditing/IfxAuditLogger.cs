@@ -114,6 +114,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
             return ipAddress;
         }
+
         public void LogRequest(ITelemetryClient telemetryClient, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
@@ -123,14 +124,11 @@ namespace Microsoft.CloudMine.Core.Auditing
                 webAppName = DefaultWebAppName; // Set to default web app name.
             }
             auditMandatoryProperties.AddCallerIdentity(new CallerIdentity(CallerIdentityType.ApplicationID, webAppName));
-            //add audit category
             auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Other);
-            //add caller identities
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
                 auditMandatoryProperties.AddCallerIdentity(callerIdentity);
             }
-            //add target resources
             auditMandatoryProperties.AddTargetResources(targetResources);
 
             // And the most important part, calling the Audit function: 
