@@ -87,11 +87,7 @@ namespace Microsoft.CloudMine.Core.Auditing
                 ResultType = operationResult,
                 OperationName = operationName
             };
-            auditMandatoryProperties.AddCallerIdentity(new CallerIdentity(CallerIdentityType.ApplicationID, webAppName));
-            foreach (CallerIdentity callerIdentity in callerIdentities)
-            {
-                auditMandatoryProperties.AddCallerIdentity(callerIdentity);
-            }
+            auditMandatoryProperties.AddCallerIdentities(callerIdentities);
             auditMandatoryProperties.AddTargetResources(targetResources);
             auditMandatoryProperties.AddAuditCategory(auditEventCategory);
             auditOptionalProperties = new AuditOptionalProperties()
