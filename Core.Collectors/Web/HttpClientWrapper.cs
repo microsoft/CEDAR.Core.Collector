@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.ApplicationInsights;
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using System;
 using System.Collections.Generic;
