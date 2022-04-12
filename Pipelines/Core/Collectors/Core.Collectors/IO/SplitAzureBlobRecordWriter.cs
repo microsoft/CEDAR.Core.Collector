@@ -173,7 +173,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             string content = record.ToString(Formatting.None);
-            if (content.Length >= RecordSizeLimit)
+            // +2 for CR+LF
+            if (Encoding.UTF8.GetMaxByteCount(content.Length) + 2 >= RecordSizeLimit &&
+                Encoding.UTF8.GetByteCount(content) + 2 >= RecordSizeLimit)
             {
                 Dictionary<string, string> properties = new Dictionary<string, string>()
                 {
