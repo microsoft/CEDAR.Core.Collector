@@ -59,39 +59,41 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType)
         {
-            LogAuthorizationAuditEvent(telemetryClient, operationResult, tokenType + TokenGenerationOperation, targetResources, callerIdentities, auditOptionalProperties);
+            LogAuditEvent(telemetryClient,  targetResources, callerIdentities, tokenType + TokenGenerationOperation, operationResult, AuditEventCategory.Authorization);
         }
 
-        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities)
         {
-            LogAuthorizationAuditEvent(telemetryClient, operationResult, FetchCertificateOperation, targetResources, callerIdentities, auditOptionalProperties);
+            LogAuditEvent(telemetryClient, targetResources, callerIdentities, FetchCertificateOperation, operationResult, AuditEventCategory.Authorization);
         }
 
-        private void LogAuthorizationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationName, TargetResource[] targetResources, CallerIdentity[] callerIdentities, AuditOptionalProperties auditOptionalProperties)
+        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName)
+        {
+            LogAuditEvent(telemetryClient, targetResources, callerIdentities, $"Request {operationName}", operationResult, AuditEventCategory.Other);
+        }
+
+        private void LogAuditEvent(ITelemetryClient telemetryClient, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName, OperationResult operationResult, AuditEventCategory auditEventCategory, AuditOptionalProperties auditOptionalProperties = null)
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))
             {
-                telemetryClient?.LogWarning($"[{nameof(LogAuthorizationAuditEvent)}] Web app name isn't found from environment variable.");
+                telemetryClient?.LogWarning($"[{nameof(LogAuditEvent)}] Web app name isn't found from environment variable.");
                 webAppName = DefaultWebAppName; // Set to default web app name.
             }
-
-            var auditMandatoryProperties = new AuditMandatoryProperties
+            AuditMandatoryProperties auditMandatoryProperties = new AuditMandatoryProperties()
             {
+                ResultType = operationResult,
                 OperationName = operationName
             };
-
-            auditMandatoryProperties.AddAuditCategory(AuditEventCategory.Authorization);
-            auditMandatoryProperties.AddCallerIdentity(new CallerIdentity(CallerIdentityType.ApplicationID, webAppName));
-            foreach (CallerIdentity callerIdentity in callerIdentities)
-            {
-                auditMandatoryProperties.AddCallerIdentity(callerIdentity);
-            }
+            auditMandatoryProperties.AddCallerIdentities(callerIdentities);
             auditMandatoryProperties.AddTargetResources(targetResources);
-            auditMandatoryProperties.ResultType = operationResult;
-
+            auditMandatoryProperties.AddAuditCategory(auditEventCategory);
+            auditOptionalProperties = new AuditOptionalProperties()
+            {
+                CallerDisplayName = webAppName
+            };
             // And the most important part, calling the Audit functions: 
             this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
         }
@@ -113,7 +115,6 @@ namespace Microsoft.CloudMine.Core.Auditing
                     break;
                 }
             }
-
             return ipAddress;
         }
     }
