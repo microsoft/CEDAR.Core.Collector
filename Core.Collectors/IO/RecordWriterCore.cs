@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
@@ -33,6 +34,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private StreamWriter currentWriter;
         private string currentOutputSuffix;
         private int currentFileIndex;
+
+        // Used to detect threading issues; RecordWriter is not thread-safe
+        private int isActive;
 
         protected ITelemetryClient TelemetryClient { get; private set; }
 
@@ -147,71 +151,84 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         public async Task WriteRecordAsync(JObject record, RecordContext recordContext)
         {
-            if (!this.initialized)
+            if (Interlocked.Exchange(ref isActive, 1) != 0)
             {
-                await this.InitializeAsync(outputSuffix: string.Empty).ConfigureAwait(false);
+                throw new FatalTerminalException("Collectors are not allowed to output in parallel. This is a bug in the collector!");
             }
 
-            // Augment the metadata to the record only if not done by another record writer.
-            JToken metadataToken = record.SelectToken("$.Metadata");
-            if (recordContext.MetadataAugmented)
+            try
             {
-                // Confirm (double check) that this is case and fail execution if not.
-                if (metadataToken == null)
+                if (!this.initialized)
+                {
+                    await this.InitializeAsync(outputSuffix: string.Empty).ConfigureAwait(false);
+                }
+
+                // Augment the metadata to the record only if not done by another record writer.
+                JToken metadataToken = record.SelectToken("$.Metadata");
+                if (recordContext.MetadataAugmented)
+                {
+                    // Confirm (double check) that this is case and fail execution if not.
+                    if (metadataToken == null)
+                    {
+                        Dictionary<string, string> properties = new Dictionary<string, string>()
+                        {
+                            { "RecordType", recordContext.RecordType },
+                            { "RecordMetadata", record.SelectToken("$.Metadata").ToString(Formatting.None) },
+                            { "RecordPrefix", record.ToString(Formatting.None).Substring(0, 1024) },
+                        };
+                        this.TelemetryClient.TrackEvent("RecordWithoutMetadata", properties);
+
+                        throw new FatalTerminalException("Detected a record without metadata. Investigate 'RecordWithoutMetadata' custom event for details.");
+                    }
+                }
+                else
+                {
+                    this.AugmentRecordMetadata(record, recordContext);
+                    this.AugmentRecord(record);
+
+                    recordContext.MetadataAugmented = true;
+                }
+
+                // Add WriterSource to Metadata after the other metadata is augmented.
+                // This value changes between writers and needs to be updated before the record is emitted.
+                metadataToken = record.SelectToken("$.Metadata");
+                JObject metadataObject = (JObject)metadataToken;
+                JToken writerSourceToken = metadataObject.SelectToken("$.WriterSource");
+                if (writerSourceToken == null)
+                {
+                    // This is the first time we are adding writer source.
+                    metadataObject.Add("WriterSource", this.source.ToString());
+                }
+                else
+                {
+                    // Override the existing value.
+                    writerSourceToken.Replace(this.source.ToString());
+                }
+
+                string content = record.ToString(Formatting.None);
+                // +2 for CR+LF
+                if (Encoding.UTF8.GetMaxByteCount(content.Length) + 2 >= this.recordSizeLimit &&
+                    Encoding.UTF8.GetByteCount(content) + 2 >= this.recordSizeLimit)
                 {
                     Dictionary<string, string> properties = new Dictionary<string, string>()
                     {
                         { "RecordType", recordContext.RecordType },
                         { "RecordMetadata", record.SelectToken("$.Metadata").ToString(Formatting.None) },
-                        { "RecordPrefix", record.ToString(Formatting.None).Substring(0, 1024) },
+                        { "RecordPrefix", content.Substring(0, 1024) },
                     };
-                    this.TelemetryClient.TrackEvent("RecordWithoutMetadata", properties);
 
-                    throw new FatalTerminalException("Detected a record without metadata. Investigate 'RecordWithoutMetadata' custom event for details.");
+                    this.TelemetryClient.TrackEvent("DroppedRecord", properties);
+                    return;
                 }
+
+                await this.WriteLineAsync(content).ConfigureAwait(false);
+
+                this.RegisterRecord(recordContext.RecordType);
             }
-            else
+            finally
             {
-                this.AugmentRecordMetadata(record, recordContext);
-                this.AugmentRecord(record);
-
-                recordContext.MetadataAugmented = true;
+                Interlocked.Exchange(ref isActive, 0);
             }
-
-            // Add WriterSource to Metadata after the other metadata is augmented. This is because this value changes between writers and need to be updated before the record is emitted.
-            metadataToken = record.SelectToken("$.Metadata");
-            JObject metadataObject = (JObject)metadataToken;
-            JToken writerSourceToken = metadataObject.SelectToken("$.WriterSource");
-            if (writerSourceToken == null)
-            {
-                // This is the first time we are adding writer source.
-                metadataObject.Add("WriterSource", this.source.ToString());
-            }
-            else
-            {
-                // Override the existing value.
-                writerSourceToken.Replace(this.source.ToString());
-            }
-
-            string content = record.ToString(Formatting.None);
-            // +2 for CR+LF
-            if (Encoding.UTF8.GetMaxByteCount(content.Length) + 2 >= this.recordSizeLimit &&
-                Encoding.UTF8.GetByteCount(content) + 2 >= this.recordSizeLimit)
-            {
-                Dictionary<string, string> properties = new Dictionary<string, string>()
-                {
-                    { "RecordType", recordContext.RecordType },
-                    { "RecordMetadata", record.SelectToken("$.Metadata").ToString(Formatting.None) },
-                    { "RecordPrefix", content.Substring(0, 1024) },
-                };
-
-                this.TelemetryClient.TrackEvent("DroppedRecord", properties);
-                return;
-            }
-
-            await this.WriteLineAsync(content).ConfigureAwait(false);
-
-            this.RegisterRecord(recordContext.RecordType);
         }
 
         private void RegisterRecord(string recordType)
