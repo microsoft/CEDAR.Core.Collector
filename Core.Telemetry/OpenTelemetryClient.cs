@@ -9,7 +9,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
     {
         private ILogger logger;
 
-        public OpenTelemetryClient(string connectionString)
+        public OpenTelemetryClient()
         {
             ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddOpenTelemetry(loggerOptions =>
             {
