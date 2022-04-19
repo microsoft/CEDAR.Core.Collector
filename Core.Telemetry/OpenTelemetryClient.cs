@@ -14,18 +14,17 @@ namespace Microsoft.CloudMine.Core.Telemetry
         {
             ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddOpenTelemetry(loggerOptions =>
             {
-                loggerOptions.AddConsoleExporter();
-                //loggerOptions.AddGenevaLogExporter(exporterOptions =>
-                //{
-                //    exporterOptions.ConnectionString = "EtwSession=OpenTelemetry";
+                loggerOptions.AddGenevaLogExporter(exporterOptions =>
+                {
+                    exporterOptions.ConnectionString = "EtwSession=OpenTelemetry";
 
-                //    exporterOptions.PrepopulatedFields = new Dictionary<string, object>
-                //    {
-                //        ["cloud.role"] = "BusyWorker",
-                //        ["cloud.roleInstance"] = "CY1SCH030021417",
-                //        ["cloud.roleVer"] = "9.0.15289.2",
-                //    };
-                //});
+                    exporterOptions.PrepopulatedFields = new Dictionary<string, object>
+                    {
+                        ["cloud.role"] = "BusyWorker",
+                        ["cloud.roleInstance"] = "CY1SCH030021417",
+                        ["cloud.roleVer"] = "9.0.15289.2",
+                    };
+                });
             }));
 
             this.logger = loggerFactory.CreateLogger<OpenTelemetryClient>();
