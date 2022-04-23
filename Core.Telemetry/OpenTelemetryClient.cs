@@ -1,16 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Exporter.Geneva;
 using OpenTelemetry.Metrics;
-using System.Diagnostics;
 using OpenTelemetry.Trace;
-using System;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace Microsoft.CloudMine.Core.Telemetry
 {
-    public class OpenTelemetryClient : ILoggerProvider, IDisposable
+    public class OpenTelemetryClient : ILoggerProvider
     {
         private const string SERVICE_NAME = "Microsoft.CloudMine.Collectors";
         private static readonly Meter Meter = new Meter(SERVICE_NAME, "1.0");
