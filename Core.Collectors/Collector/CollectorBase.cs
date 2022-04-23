@@ -14,6 +14,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
 {
@@ -57,6 +58,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public async Task<bool> ProcessAsync(T collectionNode, long maxPageCount)
         {
+            using Activity trace = OpenTelemetryClient.ActivitySource.StartActivity(collectionNode.ApiName);
+
             IBatchingHttpRequest batchingHttpRequest = this.WrapIntoBatchingHttpRequest(collectionNode);
             long counter = 0;
             bool haltCollection = false;
