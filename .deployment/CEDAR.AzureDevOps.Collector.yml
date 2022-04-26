@@ -52,7 +52,7 @@ steps:
   inputs:
     command: test
     projects: 'CloudMine\Pipelines\AzureDevOps\Collectors.Next\AzureDevOps.Collectors.sln'
-    arguments: '--configuration $(buildConfiguration) --no-restore --collect "Code coverage"'
+    arguments: '-c Release --no-restore --collect "Code coverage"'
 
 - task: ArchiveFiles@2
   displayName: 'Archive Azure DevOps collectors'
@@ -80,3 +80,5 @@ steps:
   displayName: 'Publish Artifact: SBOM'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/_manifest'
+
+- task: ComponentGovernanceComponentDetection@0

@@ -3,7 +3,7 @@
 
 using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Error;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
@@ -193,7 +194,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
 
             string content = record.ToString(Formatting.None);
-            if (content.Length >= this.recordSizeLimit)
+            // +2 for CR+LF
+            if (Encoding.UTF8.GetMaxByteCount(content.Length) + 2 >= this.recordSizeLimit &&
+                Encoding.UTF8.GetByteCount(content) + 2 >= this.recordSizeLimit)
             {
                 Dictionary<string, string> properties = new Dictionary<string, string>()
                 {

@@ -10,7 +10,7 @@ resources:
   repositories:
   - repository: CEDAR.GitHub.Collector
     type: github
-    endpoint: microsoft/CEDAR
+    endpoint: 'CloudMine (CEDAR) validation'
     name: microsoft/CEDAR.GitHub.Collector
     ref: main
 
@@ -59,7 +59,7 @@ steps:
   inputs:
     command: test
     projects: 'CEDAR.GitHub.Collector\GitHub.Collectors.sln'
-    arguments: '--configuration $(buildConfiguration) --no-restore --collect "Code coverage"'
+    arguments: '-c Release --no-restore --collect "Code coverage"'
 
 - task: ArchiveFiles@2
   displayName: 'Archive CEDAR.GitHub.Collector'

@@ -4,7 +4,7 @@
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.IO;
-using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -63,8 +63,21 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             while (batchingHttpRequest.HasNext && counter < maxPageCount && !haltCollection)
             {
                 counter++;
-                HttpResponseMessage response = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
+                RequestResult result = await batchingHttpRequest.NextResponseAsync(this.authentication).ConfigureAwait(false);
 
+                if (!result.IsSuccess())
+                {
+                    foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(result.request))
+                    {
+                        if (allowListCollectionNode is T)
+                        {
+                            await this.ProcessAsync((T) allowListCollectionNode).ConfigureAwait(false);
+                        }
+                    }
+                    break;
+                }
+
+                HttpResponseMessage response = result.response;
                 // response would be null if there was an exception while getting the response and the exception is allow-listed.
                 if (response == null || response.StatusCode == HttpStatusCode.NoContent)
                 {

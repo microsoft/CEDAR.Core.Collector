@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Core.Auditing\Core.Auditing.csproj" />
     <ProjectReference Include="..\Core.Collectors\Core.Collectors.csproj" />
   </ItemGroup>
 

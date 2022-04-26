@@ -36,6 +36,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             this.requestToResponseMap.Add(requestUrl, response);
         }
 
+        public void AddResponse(string requestUrl, string requestBody, HttpStatusCode responseStatusCode, string responseMessage)
+        {
+            HttpResponseMessage response = new HttpResponseMessage()
+            {
+                StatusCode = responseStatusCode,
+                Content = new StringContent(responseMessage),
+            };
+            this.requestToResponseMap.Add(requestUrl + requestBody, response);
+        }
+
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
         {
             if (this.requestToResponseMap.TryGetValue(requestUrl, out HttpResponseMessage result))
@@ -63,11 +73,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out HttpResponseMessage result))
+            if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage result))
             {
                 return Task.FromResult(result);
             }
 
+            if (this.requestToResponseMap.TryGetValue(requestUrl, out result))
+            {
+                return Task.FromResult(result);
+            }
+            
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
         }
     }
