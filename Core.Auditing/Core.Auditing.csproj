@@ -11,6 +11,7 @@
     <PackageReference Include="Bond.CSharp" Version="9.0.1" />
     <PackageReference Include="Bond.Runtime.CSharp" Version="9.0.1" />
     <PackageReference Include="Microsoft.Cloud.InstrumentationFramework" Version="3.3.4.1" />
+    <PackageReference Include="OpenTelemetry.Audit.Geneva" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

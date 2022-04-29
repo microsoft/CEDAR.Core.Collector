@@ -1,7 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
-using Microsoft.Cloud.InstrumentationFramework;
 using Microsoft.CloudMine.Core.Telemetry;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Audit.Geneva;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -9,20 +10,58 @@ using System.Net.Sockets;
 
 namespace Microsoft.CloudMine.Core.Auditing
 {
+
+    public class TargetResource
+    {
+        public string type;
+        public string name;
+        public string cluster;
+        public string region;
+
+        public TargetResource(string type, string name, string cluster = null, string region = null)
+        {
+            this.type = type;
+            this.name = name;
+            this.cluster = cluster;
+            this.region = region;
+        }
+    }
+
+    public class CallerIdentity
+    {
+        public CallerIdentityType type;
+        public string name;
+        public string description;
+
+        public CallerIdentity(CallerIdentityType type, string name, string description = null)
+        {
+            this.type = type;
+            this.name = name;
+            this.description = description;
+        }
+    }
+
     public class IfxAuditLogger : IAuditLogger
     {
+        private ILogger logger;
+        private string webAppName;
+        private string ipAddress;
+
         private bool alreadyLoggedPerSession = false;
         private const string TokenGenerationOperation = "TokenGeneration";
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";
 
+        private static readonly AuditLoggerFactory AuditLoggerFactory = AuditLoggerFactory.Create(AuditOptions.DefaultForEtw);
+
         /// <summary>
         /// Initializes audit logging.
         /// </summary>
-        public void Initialize(string tenantIdentity, string roleIdentity)
+        public void Initialize()
         {
-            string roleInstanceIdentity = FetchIPAddress();
-            IfxInitializer.IfxInitialize(tenantIdentity, roleIdentity, roleInstanceIdentity);
+            this.logger = AuditLoggerFactory.CreateDataPlaneLogger(); // AsmAuditDP Jarvis table
+            this.ipAddress = FetchIPAddress();
+            this.webAppName = GetWebAppName();
         }
 
         /// <summary>
@@ -31,71 +70,69 @@ namespace Microsoft.CloudMine.Core.Auditing
         /// <param name="telemetryClient">This can be null when invoked from ICM service</param>
         /// <param name="auditMandatoryProperties">Mandatory properties to log</param>
         /// <param name="auditOptionalProperties">This is optional app specific properties</param>
-        public void LogApplicationAuditEvent(ITelemetryClient telemetryClient, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null)
+        public void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
         {
-            IfxResult ifxResult = IfxResult.Failure(IfxResultCode.UnknownError, "Unknown Error");
-            bool appLogResult = IfxAudit.LogApplicationAudit(auditMandatoryProperties, auditOptionalProperties, ifxResult);
-            bool managementLogResult = IfxAudit.LogManagementAudit(auditMandatoryProperties, auditOptionalProperties, ifxResult);
+            AuditRecord auditRecord = new AuditRecord();
 
-            if ((!appLogResult || !managementLogResult) && !alreadyLoggedPerSession)
+            auditRecord.AddOperationCategory(operationCategory);
+            auditRecord.OperationType = operationType;
+            auditRecord.OperationName = operationName;
+            auditRecord.OperationResult = operationResult;
+            auditRecord.OperationResultDescription = "placeholder";
+
+            foreach (CallerIdentity callerIdentity in callerIdentities)
             {
-                /* In local box environment, audit logging mightn't be saved.
-                In order to locally debug your code, please download and execute RunBefore_IFxAuditWebAppsLocalTesting.cmd, 
-                this sets a couple of environment variables that are present in Web Apps and IFxAudit needs.After running that please make sure you restart
-                Visual Studio so that the changes are picked up.(See https://genevamondocs.azurewebsites.net/collect/references/ifxref/ifxAuditWebApps.html)
-                */
-                Dictionary<string, string> properties = new Dictionary<string, string>()
-                {
-                    { "IfxResultMessage", ifxResult.Message },
-                    { "IfxResultCode", ifxResult.Code.ToString() },
-                };
-                telemetryClient.TrackEvent("IfxApplicationAuditFailure", properties);
-                alreadyLoggedPerSession = true;
+                auditRecord.AddCallerIdentity(callerIdentity.type, callerIdentity.name, callerIdentity.description);
             }
-            else
+
+            foreach (TargetResource targetResource in targetResources)
             {
-                // If there is ever success for sending the logs, reset "alreadyLoggedPerSession" so that we capture transient failures more accurately.
-                alreadyLoggedPerSession = false;
+                auditRecord.AddTargetResource(targetResource.type, targetResource.name);
+            }
+
+            auditRecord.OperationAccessLevel = "placeholder";
+            auditRecord.CallerIpAddress = this.ipAddress;
+            auditRecord.AddCallerAccessLevel("placeholder"); 
+            auditRecord.CallerAgent = this.webAppName;
+
+            // TODO remove
+            auditRecord.AddCustomData("myKey", "myValue");
+
+            try
+            {
+                this.logger.LogAudit(auditRecord);
+            }
+            catch (Exception ex)
+            {
+                telemetryClient.TrackException(ex, "GenevaAuditFailure");
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType)
         {
-            LogAuditEvent(telemetryClient,  targetResources, callerIdentities, tokenType + TokenGenerationOperation, operationResult, AuditEventCategory.Authorization);
+            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, tokenType + TokenGenerationOperation, operationResult, callerIdentities, targetResources);
         }
 
-        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities)
+        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities)
         {
-            LogAuditEvent(telemetryClient, targetResources, callerIdentities, FetchCertificateOperation, operationResult, AuditEventCategory.Authorization);
+            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, FetchCertificateOperation, operationResult, callerIdentities, targetResources);
         }
 
-        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName)
+        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName)
         {
-            LogAuditEvent(telemetryClient, targetResources, callerIdentities, $"Request {operationName}", operationResult, AuditEventCategory.Other);
+            LogAuditEvent(telemetryClient, OperationCategory.CustomerFacing, OperationType.Read, $"Request {operationName}", operationResult, callerIdentities, targetResources);
         }
 
-        private void LogAuditEvent(ITelemetryClient telemetryClient, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName, OperationResult operationResult, AuditEventCategory auditEventCategory, AuditOptionalProperties auditOptionalProperties = null)
+
+        private string GetWebAppName()
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))
             {
-                telemetryClient?.LogWarning($"[{nameof(LogAuditEvent)}] Web app name isn't found from environment variable.");
-                webAppName = DefaultWebAppName; // Set to default web app name.
+                webAppName = DefaultWebAppName;
             }
-            AuditMandatoryProperties auditMandatoryProperties = new AuditMandatoryProperties()
-            {
-                ResultType = operationResult,
-                OperationName = operationName
-            };
-            auditMandatoryProperties.AddCallerIdentities(callerIdentities);
-            auditMandatoryProperties.AddTargetResources(targetResources);
-            auditMandatoryProperties.AddAuditCategory(auditEventCategory);
-            auditOptionalProperties = new AuditOptionalProperties()
-            {
-                CallerDisplayName = webAppName
-            };
-            // And the most important part, calling the Audit functions: 
-            this.LogApplicationAuditEvent(telemetryClient, auditMandatoryProperties, auditOptionalProperties);
+
+            return webAppName;
         }
 
         public static string FetchIPAddress()

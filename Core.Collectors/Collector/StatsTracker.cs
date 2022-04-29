@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Threading;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
@@ -39,6 +40,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     /// </summary>
     public class StatsTracker
     {
+        public static readonly Counter<long> RecordCounter = OpenTelemetryClient.Meter.CreateCounter<long>("RecordCounter");
+
         private readonly ITelemetryClient telemetryClient;
         private readonly IWebRequestStatsTracker webRequestStatsTracker;
         private readonly IRecordStatsTracker recordStatsTracker;
@@ -93,7 +96,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("recordType", recordType);
-                    OpenTelemetryClient.RecordCounter.Add(recordCount, tags);
+                    RecordCounter.Add(recordCount, tags);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());
