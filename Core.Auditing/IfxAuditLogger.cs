@@ -53,9 +53,6 @@ namespace Microsoft.CloudMine.Core.Auditing
 
         private static readonly AuditLoggerFactory AuditLoggerFactory = AuditLoggerFactory.Create(AuditOptions.DefaultForEtw);
 
-        /// <summary>
-        /// Initializes audit logging.
-        /// </summary>
         public void Initialize()
         {
             this.logger = AuditLoggerFactory.CreateDataPlaneLogger(); // AsmAuditDP Jarvis table
@@ -63,12 +60,6 @@ namespace Microsoft.CloudMine.Core.Auditing
             this.webAppName = GetWebAppName();
         }
 
-        /// <summary>
-        /// Log audit event
-        /// </summary>
-        /// <param name="telemetryClient">This can be null when invoked from ICM service</param>
-        /// <param name="auditMandatoryProperties">Mandatory properties to log</param>
-        /// <param name="auditOptionalProperties">This is optional app specific properties</param>
         private void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
         {
             AuditRecord auditRecord = new AuditRecord();
