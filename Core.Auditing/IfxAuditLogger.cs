@@ -70,7 +70,7 @@ namespace Microsoft.CloudMine.Core.Auditing
         /// <param name="telemetryClient">This can be null when invoked from ICM service</param>
         /// <param name="auditMandatoryProperties">Mandatory properties to log</param>
         /// <param name="auditOptionalProperties">This is optional app specific properties</param>
-        public void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
+        private void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
         {
             AuditRecord auditRecord = new AuditRecord();
 
@@ -94,9 +94,6 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditRecord.CallerIpAddress = this.ipAddress;
             auditRecord.AddCallerAccessLevel("placeholder"); 
             auditRecord.CallerAgent = this.webAppName;
-
-            // TODO remove
-            auditRecord.AddCustomData("myKey", "myValue");
 
             try
             {
@@ -123,8 +120,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             LogAuditEvent(telemetryClient, OperationCategory.CustomerFacing, OperationType.Read, $"Request {operationName}", operationResult, callerIdentities, targetResources);
         }
 
-
-        private string GetWebAppName()
+        private static string GetWebAppName()
         {
             string webAppName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if (string.IsNullOrEmpty(webAppName))

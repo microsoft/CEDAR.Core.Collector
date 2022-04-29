@@ -5,7 +5,6 @@ using Microsoft.CloudMine.Core.Collectors.Cache;
 using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
