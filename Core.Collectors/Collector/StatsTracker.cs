@@ -94,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("recordType", recordType);
-                    OpenTelemetryClient.EmitMetric<long>("RecordCounter", recordCount);
+                    OpenTelemetryClient.EmitMetric<long>("RecordCounter", recordCount, tags);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());
