@@ -47,7 +47,6 @@ namespace Microsoft.CloudMine.Core.Auditing
         private string webAppName;
         private string ipAddress;
 
-        private bool alreadyLoggedPerSession = false;
         private const string TokenGenerationOperation = "TokenGeneration";
         private const string FetchCertificateOperation = "FetchCertificate";
         private const string DefaultWebAppName = "CloudMinePlatform";

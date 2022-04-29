@@ -40,8 +40,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     /// </summary>
     public class StatsTracker
     {
-        public static readonly Counter<long> RecordCounter = OpenTelemetryClient.Meter.CreateCounter<long>("RecordCounter");
-
         private readonly ITelemetryClient telemetryClient;
         private readonly IWebRequestStatsTracker webRequestStatsTracker;
         private readonly IRecordStatsTracker recordStatsTracker;
@@ -96,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("recordType", recordType);
-                    RecordCounter.Add(recordCount, tags);
+                    OpenTelemetryClient.EmitMetric<long>("RecordCounter", recordCount);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());
