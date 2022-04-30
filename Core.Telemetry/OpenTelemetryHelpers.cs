@@ -6,12 +6,33 @@ namespace Microsoft.CloudMine.Core.Telemetry
 {
     public static class OpenTelemetryHelpers
     {
+        public const string GenevaExporterName = "Geneva";
 
-        public static readonly string Product = GetEnvironmentVariableWithDefault("Product");
-        public static readonly string Service = GetEnvironmentVariableWithDefault("Service");
-        public static readonly string AppEnvironment = GetEnvironmentVariableWithDefault("Environment", defaultValue: "*");
-        public static readonly string Deployment = GetEnvironmentVariableWithDefault("Deployment", defaultValue: "*");
-        public static readonly string Region = GetEnvironmentVariableWithDefault("Region", defaultValue: "*");
+        public static readonly string Product;
+        public static readonly string Service;
+        public static readonly string AppEnvironment;
+        public static readonly string Deployment;
+        public static readonly string Region;
+        public static readonly string OpenTelemetryExporter;
+        
+        static OpenTelemetryHelpers()
+        {
+            OpenTelemetryExporter = GetEnvironmentVariableWithDefault("OpenTelemetryExporter", defaultValue: "*");
+            AppEnvironment = GetEnvironmentVariableWithDefault("Environment", defaultValue: "*");
+            Deployment = GetEnvironmentVariableWithDefault("Deployment", defaultValue: "*");
+            Region = GetEnvironmentVariableWithDefault("Region", defaultValue: "*");
+
+            // if environment variables for exporting to geneva are not set, revert to default exporter.
+            try
+            {
+                Product = GetEnvironmentVariableWithDefault("Product");
+                Service = GetEnvironmentVariableWithDefault("Service");
+            }
+            catch
+            {
+                OpenTelemetryExporter = "*";
+            }
+        }
 
         public static Activity AddDefaultTags(this Activity activity)
         {

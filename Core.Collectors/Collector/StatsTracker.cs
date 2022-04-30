@@ -7,7 +7,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using System.Threading;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
@@ -94,7 +93,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("recordType", recordType);
-                    OpenTelemetryClient.EmitMetric<long>("RecordCounter", recordCount, tags);
+                    OpenTelemetryMetric.RecordCounter.Add(recordCount, tags);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());
