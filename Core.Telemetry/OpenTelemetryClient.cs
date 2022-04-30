@@ -4,6 +4,8 @@ using OpenTelemetry.Exporter.Geneva;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
@@ -11,12 +13,10 @@ namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class OpenTelemetryClient : ILoggerProvider
     {
-        private const string SUBSCRIPTION_KEY = "Collectors";
+        private const string SUBSCRIPTION_KEY = "Telemetry";
 
         private static readonly Meter Meter = new Meter(SUBSCRIPTION_KEY, "1.0");
         private static readonly ActivitySource ActivitySource = new ActivitySource(SUBSCRIPTION_KEY);
-
-        private static readonly string appEnv = OpenTelemetryHelpers.GetEnvironmentVariableWithDefault("AppEnv", defaultValue: "*");
 
         private readonly ILoggerFactory loggerFactory;
         private readonly TracerProvider tracerProvider;
@@ -24,6 +24,8 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
         public OpenTelemetryClient()
         {
+            string appEnv = OpenTelemetryHelpers.GetEnvironmentVariableWithDefault("AppEnv", defaultValue: "*");
+
             if (appEnv.Equals("Production"))
             {
                 string connectionString = $"Account={OpenTelemetryHelpers.Product};Namespace={OpenTelemetryHelpers.Service}";
@@ -39,6 +41,16 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
         }
 
+        public static Activity GetActivity(string name)
+        {
+            return ActivitySource.CreateActivity(name, ActivityKind.Internal).AddDefaultTags();
+        }
+
+        public static void EmitMetric<T>(string name, T value, TagList tags = new TagList()) where T : struct
+        {
+            Meter.CreateCounter<T>(name).AddWithDefaultTags(value, tags);
+        }
+
         public ILogger CreateLogger(string categoryName)
         {
             return this.loggerFactory.CreateLogger(categoryName);
@@ -49,16 +61,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             this.tracerProvider.Dispose();
             this.meterProvider.Dispose();
             this.loggerFactory.Dispose();
-        }
-
-        public static Activity GetActivity(string name)
-        {
-            return ActivitySource.CreateActivity(name, ActivityKind.Internal).AddDefaultTags();
-        }
-
-        public static void EmitMetric<T>(string name, T value, TagList tags = new TagList()) where T : struct
-        {
-            Meter.CreateCounter<T>(name).AddWithDefaultTags(value, tags);
         }
     }
 }
