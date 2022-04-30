@@ -92,7 +92,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     recordCountSummary += $"{recordType} = {recordCount}, ";
 
                     TagList tags = new TagList();
-                    tags.Add("recordType", recordType);
+                    tags.Add("RecordType", recordType);
                     OpenTelemetryMetric.RecordCounter.Add(recordCount, tags);
                 }
 

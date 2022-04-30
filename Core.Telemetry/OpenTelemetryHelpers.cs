@@ -31,6 +31,8 @@ namespace Microsoft.CloudMine.Core.Telemetry
             catch
             {
                 OpenTelemetryExporter = "*";
+                Product = "*";
+                Service = "Collectors";
             }
         }
 
