@@ -43,8 +43,21 @@ namespace Microsoft.CloudMine.Core.Telemetry
             activity.AddTag("Environment", AppEnvironment);
             activity.AddTag("Deployment", Deployment);
             activity.AddTag("Region", Region);
-
+            activity.AddTag("Depth", GetActivityDepth() + 1);
             return activity;
+        }
+
+        public static int GetActivityDepth()
+        { 
+            try
+            {
+                Activity a = Activity.Current;
+                return (int) a.GetTagItem("Depth");
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
         }
 
         public static void AddWithDefaultTags<T>(this Counter<T> counter, T value, TagList tags) where T : struct
