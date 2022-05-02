@@ -59,6 +59,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         public async Task<bool> ProcessAsync(T collectionNode, long maxPageCount)
         {
             using Activity trace = OpenTelemetryTracer.GetActivity(OpenTelemetryTrace.ProccessCollectionNode).Start();
+            trace.AddTag("ApiName", collectionNode.ApiName);
+            trace.AddTag("RecordType", collectionNode.RecordType);
 
             IBatchingHttpRequest batchingHttpRequest = this.WrapIntoBatchingHttpRequest(collectionNode);
             long counter = 0;
