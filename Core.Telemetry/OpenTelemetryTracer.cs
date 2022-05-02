@@ -13,7 +13,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
         public static Activity GetActivity(OpenTelemetryTrace trace)
         {
-            return ActivitySource.CreateActivity(trace.ToString(), ActivityKind.Internal).AddDefaultTags();
+            return ActivitySource.CreateActivity(trace.Name, ActivityKind.Internal).AddDefaultTags();
         }
 
         public static void Dispose()
@@ -36,6 +36,21 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
 
             return tracerProvider;
+        }
+
+        public class OpenTelemetryTrace
+        {
+            public static OpenTelemetryTrace FunctionInvocation = new OpenTelemetryTrace("FunctionInvocation");
+            public static OpenTelemetryTrace ProccessCollectionNode = new OpenTelemetryTrace("ProccessCollectionNode");
+            public static OpenTelemetryTrace Heartbeat = new OpenTelemetryTrace("Heartbeat");
+            public static OpenTelemetryTrace Request = new OpenTelemetryTrace("Request");
+
+            public string Name;
+
+            protected OpenTelemetryTrace(string name)
+            {
+                this.Name = name;
+            }
         }
     }
 }

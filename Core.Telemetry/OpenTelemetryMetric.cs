@@ -52,7 +52,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
     public class TelemetryMetric<T> where T : struct
     {
-
         private Counter<T> counter;
 
         public TelemetryMetric(string name)
