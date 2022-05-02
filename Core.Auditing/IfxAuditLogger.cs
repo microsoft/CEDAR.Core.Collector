@@ -53,7 +53,7 @@ namespace Microsoft.CloudMine.Core.Auditing
 
         private static readonly AuditLoggerFactory AuditLoggerFactory = AuditLoggerFactory.Create(AuditOptions.DefaultForEtw);
 
-        public void Initialize()
+        public IfxAuditLogger()
         {
             this.logger = AuditLoggerFactory.CreateDataPlaneLogger(); // AsmAuditDP Jarvis table
             this.ipAddress = FetchIPAddress();
@@ -68,7 +68,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditRecord.OperationType = operationType;
             auditRecord.OperationName = operationName;
             auditRecord.OperationResult = operationResult;
-            auditRecord.OperationResultDescription = "placeholder";
+            //auditRecord.OperationResultDescription = Required if operation result is ever Failure; 
 
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
@@ -80,9 +80,9 @@ namespace Microsoft.CloudMine.Core.Auditing
                 auditRecord.AddTargetResource(targetResource.type, targetResource.name);
             }
 
-            auditRecord.OperationAccessLevel = "placeholder";
+            auditRecord.OperationAccessLevel = "GroupManager";
             auditRecord.CallerIpAddress = this.ipAddress;
-            auditRecord.AddCallerAccessLevel("placeholder"); 
+            auditRecord.AddCallerAccessLevel("GroupOperator"); 
             auditRecord.CallerAgent = this.webAppName;
 
             try

@@ -5,11 +5,11 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.CloudMine.Core.Telemetry
 {
-    public class OpenTelemetryLoggerFactory : ILoggerProvider
+    public class OpenTelemetryLoggerProvider : ILoggerProvider
     {
         private readonly ILoggerFactory loggerFactory;
 
-        public OpenTelemetryLoggerFactory()
+        public OpenTelemetryLoggerProvider()
         {
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
