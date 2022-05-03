@@ -1,4 +1,6 @@
-﻿using OpenTelemetry;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+
+using OpenTelemetry;
 using OpenTelemetry.Exporter.Geneva;
 using OpenTelemetry.Trace;
 using System.Diagnostics;
