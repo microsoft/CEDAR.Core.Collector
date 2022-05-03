@@ -56,7 +56,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
             catch (Exception)
             {
-                return 0;
+                return -1;
             }
         }
 
