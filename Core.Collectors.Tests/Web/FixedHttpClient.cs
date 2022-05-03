@@ -14,11 +14,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 {
     public class FixedHttpClient : IHttpClient
     {
-        private readonly Dictionary<string, HttpResponseMessage> requestToResponseMap;
+        private readonly Dictionary<string, Tuple<HttpStatusCode, string>> requestToResponseMap;
 
         public FixedHttpClient()
         {
-            this.requestToResponseMap = new Dictionary<string, HttpResponseMessage>();
+            this.requestToResponseMap = new Dictionary<string, Tuple<HttpStatusCode, string>>();
         }
 
         public void Reset()
@@ -28,29 +28,23 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public void AddResponse(string requestUrl, HttpStatusCode responseStatusCode, string responseMessage)
         {
-            HttpResponseMessage response = new HttpResponseMessage()
-            {
-                StatusCode = responseStatusCode,
-                Content = new StringContent(responseMessage),
-            };
-            this.requestToResponseMap.Add(requestUrl, response);
+            this.requestToResponseMap.Add(requestUrl, Tuple.Create(responseStatusCode, responseMessage));
         }
 
         public void AddResponse(string requestUrl, string requestBody, HttpStatusCode responseStatusCode, string responseMessage)
         {
-            HttpResponseMessage response = new HttpResponseMessage()
-            {
-                StatusCode = responseStatusCode,
-                Content = new StringContent(responseMessage),
-            };
-            this.requestToResponseMap.Add(requestUrl + requestBody, response);
+            this.requestToResponseMap.Add(requestUrl + requestBody, Tuple.Create(responseStatusCode, responseMessage));
         }
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out HttpResponseMessage result))
+            if (this.requestToResponseMap.TryGetValue(requestUrl, out Tuple<HttpStatusCode, string> response))
             {
-                return Task.FromResult(result);
+                return Task.FromResult(new HttpResponseMessage()
+                {
+                    StatusCode = response.Item1,
+                    Content = new StringContent(response.Item2),
+                });
             }
 
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
@@ -73,16 +67,26 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage result))
+            if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out Tuple<HttpStatusCode, string> response))
             {
+                HttpResponseMessage result = new HttpResponseMessage()
+                {
+                    StatusCode = response.Item1,
+                    Content = new StringContent(response.Item2),
+                };
                 return Task.FromResult(result);
             }
 
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out result))
+            if (this.requestToResponseMap.TryGetValue(requestUrl, out response))
             {
+                HttpResponseMessage result = new HttpResponseMessage()
+                {
+                    StatusCode = response.Item1,
+                    Content = new StringContent(response.Item2),
+                };
                 return Task.FromResult(result);
             }
-            
+
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
         }
     }
