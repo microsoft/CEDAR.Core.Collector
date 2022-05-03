@@ -39,7 +39,12 @@ namespace Microsoft.CloudMine.Core.Telemetry
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
                     string connectionString = $"Account={OpenTelemetryHelpers.Product};Namespace={OpenTelemetryHelpers.Service}";
-                    meterProvider = Sdk.CreateMeterProviderBuilder().AddMeter(SUBSCRIPTION_KEY).AddGenevaMetricExporter(options => { options.ConnectionString = connectionString; }).Build();
+
+                    meterProvider = Sdk.CreateMeterProviderBuilder().AddMeter(SUBSCRIPTION_KEY).AddGenevaMetricExporter(options =>
+                    {
+                        options.ConnectionString = connectionString;
+                    }).Build();
+
                     break;
                 default:
                     meterProvider = Sdk.CreateMeterProviderBuilder().AddMeter(SUBSCRIPTION_KEY).AddConsoleExporter().Build();
