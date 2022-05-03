@@ -5,8 +5,8 @@ using Microsoft.CloudMine.Core.Collectors.Context;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Utility;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Queue;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs.Specialized;
 
 namespace Microsoft.CloudMine.Core.Collectors.IO
 {
@@ -28,7 +29,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private readonly string notificationQueuePrefix;
         private readonly string storageConnectionEnvironmentVariable;
 
-        private CloudBlobContainer outContainer;
+        private BlobContainerClient outContainer;
 
         private readonly T functionContext;
         private readonly ContextWriter<T> contextWriter;
@@ -269,7 +270,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private class WriterState : IDisposable
         {
             protected long SizeInBytes { get; private set; }
-            public CloudBlockBlob OutputBlob { get; private set; }
+            public BlockBlobClient OutputBlob { get; private set; }
             public List<string> FinalizedOutputPaths { get; private set; }
             private IQueue notificationQueue;
 
@@ -277,7 +278,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             private readonly string blobRoot;
             private readonly string outputPath;
             private StreamWriter writer;
-            private readonly CloudBlobContainer outContainer;
+            private readonly BlobContainerClient outContainer;
             private readonly string notificationQueuePrefix;
             private readonly string storageConnectionEnvironmentVariable;
 
@@ -286,7 +287,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             private long recordCount;
             private DateTime minCollectionDateUtc;
 
-            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
+            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, BlobContainerClient outContainer)
             {
                 this.recordType = recordType;
                 this.blobRoot = blobRoot;
@@ -308,8 +309,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             {
                 this.fileIndex++;
                 string suffix = fileIndex == 0 ? "" : $"_{fileIndex}";
-                this.OutputBlob = outContainer.GetBlockBlobReference($"{this.recordType}/{this.outputPath}{suffix}.json");
-                CloudBlobStream cloudBlobStream = await this.OutputBlob.OpenWriteAsync().ConfigureAwait(false);
+                this.OutputBlob = outContainer.GetBlockBlobClient($"{this.recordType}/{this.outputPath}{suffix}.json");
+                Stream cloudBlobStream = await this.OutputBlob.OpenWriteAsync(true).ConfigureAwait(false);
                 this.writer = new StreamWriter(cloudBlobStream, Encoding.UTF8);
 
                 // Initialize the notification queue only once since we keep using the same queue even for multiple files.
@@ -323,7 +324,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    QueueClient queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
                     this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 

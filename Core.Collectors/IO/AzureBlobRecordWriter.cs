@@ -2,9 +2,10 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
-using Microsoft.CloudMine.Core.Telemetry;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.CloudMine.Core.Collectors.Telemetry;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
+using Azure.Storage.Blobs.Specialized;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,9 +22,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private readonly string storageConnectionEnvironmentVariable;
         private readonly string notificationQueueConnectionEnvironmentVariable;
 
-        private CloudBlobContainer outContainer;
-        private CloudBlockBlob outputBlob;
-        private CloudQueue queue;
+        private BlobContainerClient outContainer;
+        private BlockBlobClient outputBlob;
+        private QueueClient queue;
 
         public AzureBlobRecordWriter(string blobRoot,
                                      string outputQueueName,
@@ -49,8 +50,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         protected override async Task<StreamWriter> NewStreamWriterAsync(string suffix)
         {
-            this.outputBlob = this.outContainer.GetBlockBlobReference($"{this.OutputPathPrefix}{suffix}.json");
-            CloudBlobStream cloudBlobStream = await this.outputBlob.OpenWriteAsync().ConfigureAwait(false);
+            this.outputBlob = this.outContainer.GetBlockBlobClient($"{this.OutputPathPrefix}{suffix}.json");
+            Stream cloudBlobStream = await this.outputBlob.OpenWriteAsync(true).ConfigureAwait(false);
             return new StreamWriter(cloudBlobStream, Encoding.UTF8);
         }
 
@@ -59,7 +60,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             string notificiationMessage = AzureHelpers.GenerateNotificationMessage(this.outputBlob);
             if (this.queue != null)
             {
-                await this.queue.AddMessageAsync(new CloudQueueMessage(notificiationMessage)).ConfigureAwait(false);
+                await this.queue.SendMessageAsync(notificiationMessage).ConfigureAwait(false);
             }
 
             this.AddOutputPath(this.outputBlob.Name);

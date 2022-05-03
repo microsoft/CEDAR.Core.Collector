@@ -2,12 +2,11 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
-using Microsoft.CloudMine.Core.Telemetry;
-using Microsoft.Azure.DataLake.Store;
+using Microsoft.CloudMine.Core.Collectors.Telemetry;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.DataLake.Store.FileTransfer;
+using Azure.Storage.Files.DataLake;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -16,11 +15,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public class AdlsConfig
     {
-        public AdlsClient AdlsClient { get; }
+        public DataLakeServiceClient AdlsClient { get; }
         public string AdlsRoot { get; }
         public string Version { get; }
 
-        public AdlsConfig(AdlsClient adlsClient, string adlsRoot, string version)
+        public AdlsConfig(DataLakeServiceClient adlsClient, string adlsRoot, string version)
         {
             this.AdlsClient = adlsClient;
             this.AdlsRoot = adlsRoot;
@@ -44,7 +43,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private string currentLocalPath;
 
         // Keeping this constructor for backwards compatibility for now.
-        public AdlsBulkRecordWriter(AdlsClient adlsClient,
+        public AdlsBulkRecordWriter(DataLakeServiceClient adlsClient,
                                     string identifier,
                                     ITelemetryClient telemetryClient,
                                     T functionContext,
@@ -166,30 +165,16 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             Stopwatch uploadTimer = Stopwatch.StartNew();
             string adlsDirectory = $"{adlsConfig.AdlsRoot}/{adlsConfig.Version}";
-
-            TransferStatus status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory);
-            bool retried = false;
-            if (status.EntriesFailed.Count != 0)
+            DataLakeFileSystemClient filesystem = adlsConfig.AdlsClient.GetFileSystemClient("sample-filesystem-append");
+            filesystem.Create();
+            try {
+                DataLakeFileClient file = filesystem.GetFileClient(adlsDirectory);
+                file.Create();
+                file.Upload(File.OpenRead(this.localRoot), true);
+            }
+            finally
             {
-                retried = true;
-                // Retry once.
-                status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory, shouldOverwrite: IfExists.Fail);
-                if (status.EntriesFailed.Count != 0)
-                {
-                    foreach (SingleEntryTransferStatus failedTransferStatus in status.EntriesFailed)
-                    {
-                        Dictionary<string, string> transferStatusProperties = new Dictionary<string, string>()
-                        {
-                            { "EntryName", failedTransferStatus.EntryName },
-                            { "EntrySize", failedTransferStatus.EntrySize.ToString() },
-                            { "TransferErrors", failedTransferStatus.Errors },
-                            { "TransferStatus", failedTransferStatus.Status.ToString() },
-                            { "TransferType", failedTransferStatus.Type.ToString() },
-                        };
-                        this.TelemetryClient.TrackEvent("FailedTransferStatus", transferStatusProperties);
-                    }
-                    throw new FatalException($"Cannot bulk upload '{finalOutputPath}'.");
-                }
+                filesystem.Delete();
             }
 
             uploadTimer.Stop();
@@ -198,7 +183,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             Dictionary<string, string> properties = new Dictionary<string, string>()
             {
                 { "Duration", uploadDuration.ToString() },
-                { "Retried", retried.ToString() },
                 { "SizeBytes", this.SizeInBytes.ToString() },
                 { "LocalPath", finalOutputPath },
             };
