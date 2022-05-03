@@ -1,4 +1,6 @@
-﻿namespace Microsoft.CloudMine.Core.Telemetry
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+
+namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class OpenTelemetryTrace
     {

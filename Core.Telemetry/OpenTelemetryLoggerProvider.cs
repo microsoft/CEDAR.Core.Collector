@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
