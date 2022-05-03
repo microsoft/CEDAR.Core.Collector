@@ -14,11 +14,28 @@ namespace Microsoft.CloudMine.Core.Telemetry
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
-                    this.loggerFactory = LoggerFactory.Create(builder => builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddGenevaLogExporter(exporterOptions => { exporterOptions.ConnectionString = "EtwSession=OpenTelemetry"; })));
+
+                    this.loggerFactory = LoggerFactory.Create(builder =>
+                    {
+                        builder.AddOpenTelemetry(loggerOptions =>
+                        {
+                            loggerOptions.IncludeFormattedMessage = true;
+                            loggerOptions.AddGenevaLogExporter(exporterOptions =>
+                            {
+                                exporterOptions.ConnectionString = "EtwSession=OpenTelemetry";
+                            });
+                        });
+                    });
+
                     break;
 
                 default:
-                    this.loggerFactory = LoggerFactory.Create(builder => builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddConsoleExporter()));
+
+                    this.loggerFactory = LoggerFactory.Create(builder =>
+                    {
+                        builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddConsoleExporter());
+                    });
+
                     break;
             }
         }

@@ -9,13 +9,9 @@ namespace Microsoft.CloudMine.Core.Telemetry
     {
         private const string SUBSCRIPTION_KEY = "Traces";
         private static readonly TracerProvider TracerProvider = BuildTracerProvider();
-        private static readonly ActivitySource ActivitySource = new ActivitySource(SUBSCRIPTION_KEY);
+        public static readonly ActivitySource ActivitySource = new ActivitySource(SUBSCRIPTION_KEY);
 
-        public static Activity GetActivity(OpenTelemetryTrace trace)
-        {
-            return ActivitySource.CreateActivity(trace.Name, ActivityKind.Internal).AddDefaultTags();
-        }
-
+        
         public static void Dispose()
         {
             TracerProvider.Dispose();
@@ -28,7 +24,12 @@ namespace Microsoft.CloudMine.Core.Telemetry
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
-                    tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new AlwaysOnSampler()).AddSource(SUBSCRIPTION_KEY).AddGenevaTraceExporter(options => { options.ConnectionString = "EtwSession=OpenTelemetry"; }).Build();
+
+                    tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new AlwaysOnSampler()).AddSource(SUBSCRIPTION_KEY).AddGenevaTraceExporter(options =>
+                    {
+                        options.ConnectionString = "EtwSession=OpenTelemetry";
+                    }).Build();
+
                     break;
                 default:
                     tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new AlwaysOnSampler()).AddSource(SUBSCRIPTION_KEY).AddConsoleExporter().Build();
