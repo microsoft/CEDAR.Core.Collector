@@ -43,6 +43,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private string currentSuffix;
         private string currentLocalPath;
 
+        private readonly HashSet<string> filePaths;
+
         // Keeping this constructor for backwards compatibility for now.
         public AdlsBulkRecordWriter(AdlsClient adlsClient,
                                     string identifier,
@@ -65,6 +67,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             this.adlsConfigs = adlsConfigs;
             this.uniqueId = functionContext.SessionId;
             this.currentSuffix = null;
+
+            this.filePaths = new HashSet<string>();
         }
 
         protected override Task InitializeInternalAsync()
@@ -83,6 +87,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
             StreamWriter result = File.CreateText(this.currentLocalPath);
             return Task.FromResult(result);
+        }
+
+        public override void AddFilePath(string filePath)
+        {
+            this.filePaths.Add(filePath);
         }
 
         protected override async Task NotifyCurrentOutputAsync()
@@ -121,7 +130,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             List<Task<string>> uploadTasks = new List<Task<string>>();
             foreach (AdlsConfig adlsConfig in this.adlsConfigs)
             {
-                Task<string> uploadTask = Task<string>.Factory.StartNew(() => BulkUploadToAdlsConfig(finalOutputPath, adlsConfig));
+                Task<string> uploadTask = Task<string>.Factory.StartNew(() => BulkUploadToAdlsConfig(fileName, adlsConfig));
                 uploadTasks.Add(uploadTask);
             }
 
@@ -159,10 +168,12 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         throw new FatalException(message);
                     }
                 }
+
+                this.filePaths.Clear();
             }
         }
 
-        private string BulkUploadToAdlsConfig(string finalOutputPath, AdlsConfig adlsConfig)
+        private string BulkUploadToAdlsConfig(string fileName, AdlsConfig adlsConfig)
         {
             Stopwatch uploadTimer = Stopwatch.StartNew();
             string adlsDirectory = $"{adlsConfig.AdlsRoot}/{adlsConfig.Version}";
@@ -188,7 +199,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         };
                         this.TelemetryClient.TrackEvent("FailedTransferStatus", transferStatusProperties);
                     }
-                    throw new FatalException($"Cannot bulk upload '{finalOutputPath}'.");
+                    throw new FatalException($"Cannot bulk upload '{Path.Combine(this.localRoot, fileName)}'.");
                 }
             }
 
@@ -200,7 +211,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 { "Duration", uploadDuration.ToString() },
                 { "Retried", retried.ToString() },
                 { "SizeBytes", this.SizeInBytes.ToString() },
-                { "LocalPath", finalOutputPath },
+                { "OutputFileName", fileName },
+                { "LocalRoot", this.localRoot },
+                { "AdlsRoot", adlsDirectory },
+                { "InputFilePaths", string.Join(",", this.filePaths) },
             };
             this.TelemetryClient.TrackEvent("AdlsUploadStats", properties);
 

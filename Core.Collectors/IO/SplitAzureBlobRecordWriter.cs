@@ -80,6 +80,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             this.outputPathPrefix = outputPathPrefix;
         }
 
+        public void AddFilePath(string filePath)
+        {
+            // No file mapping is done in split azure blob writer, so ignore.
+        }
+
         protected string OutputPathPrefix => this.GetOutputPathPrefix(this.functionContext.FunctionStartDate);
 
         protected string GetOutputPathPrefix(DateTime dateTimeUtc)

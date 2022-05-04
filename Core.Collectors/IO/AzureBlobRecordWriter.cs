@@ -64,5 +64,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
             this.AddOutputPath(this.outputBlob.Name);
         }
+
+        public override void AddFilePath(string filePath)
+        {
+            // No file mapping is done in azure blob writer, so ignore.
+        }
     }
 }
