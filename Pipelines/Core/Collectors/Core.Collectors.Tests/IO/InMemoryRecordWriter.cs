@@ -50,6 +50,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.IO
             return Task.CompletedTask;
         }
 
+        public void AddFilePath(string filePath)
+        {
+            // No file mapping is done in split azure blob writer, so ignore.
+        }
+
         public void SetOutputPathPrefix(string outputPathPrefix)
         {
             throw new NotImplementedException();
