@@ -16,6 +16,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         Task WriteLineAsync(string content);
         Task WriteRecordAsync(JObject record, RecordContext context);
         Task NewOutputAsync(string outputSuffix, int fileIndex = 0);
+        void AddFilePath(string filePath);
     }
 
     public enum RecordWriterType
