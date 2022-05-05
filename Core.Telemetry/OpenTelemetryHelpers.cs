@@ -51,15 +51,12 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
         public static int GetActivityDepth()
         { 
-            try
+            if (Activity.Current?.GetTagItem("Depth") is int depth)
             {
-                Activity a = Activity.Current;
-                return (int) a.GetTagItem("Depth");
+                return depth;
             }
-            catch (Exception)
-            {
-                return -1;
-            }
+
+            return -1;
         }
 
         public static void AddWithDefaultTags<T>(this Counter<T> counter, T value, TagList tags) where T : struct
