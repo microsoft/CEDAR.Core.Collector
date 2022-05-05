@@ -60,7 +60,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             this.webAppName = GetWebAppName();
         }
 
-        private void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
+        private void LogAuditEvent(ITelemetryClient telemetryClient, OperationCategory operationCategory, OperationType operationType, string operationName, OperationResult operationResult, string operationResultDescription, List<CallerIdentity> callerIdentities, List<TargetResource> targetResources)
         {
             AuditRecord auditRecord = new AuditRecord();
 
@@ -68,7 +68,7 @@ namespace Microsoft.CloudMine.Core.Auditing
             auditRecord.OperationType = operationType;
             auditRecord.OperationName = operationName;
             auditRecord.OperationResult = operationResult;
-            //auditRecord.OperationResultDescription = Required if operation result is ever Failure; 
+            auditRecord.OperationResultDescription = operationResultDescription;
 
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
@@ -95,19 +95,19 @@ namespace Microsoft.CloudMine.Core.Auditing
             }
         }
 
-        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType)
+        public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType)
         {
-            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, tokenType + TokenGenerationOperation, operationResult, callerIdentities, targetResources);
+            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, tokenType + TokenGenerationOperation, operationResult, operationResultDescription, callerIdentities, targetResources);
         }
 
-        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities)
+        public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities)
         {
-            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, FetchCertificateOperation, operationResult, callerIdentities, targetResources);
+            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, FetchCertificateOperation, operationResult, operationResultDescription, callerIdentities, targetResources);
         }
 
-        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName)
+        public void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName)
         {
-            LogAuditEvent(telemetryClient, OperationCategory.CustomerFacing, OperationType.Read, $"Request {operationName}", operationResult, callerIdentities, targetResources);
+            LogAuditEvent(telemetryClient, OperationCategory.CustomerFacing, OperationType.Read, $"Request {operationName}", operationResult, operationResultDescription, callerIdentities, targetResources);
         }
 
         private static string GetWebAppName()

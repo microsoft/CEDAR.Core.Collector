@@ -8,10 +8,10 @@ namespace Microsoft.CloudMine.Core.Auditing
 {
     public interface IAuditLogger
     {
-        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType);
+        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType);
 
-        void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities);
+        void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescriptionList, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities);
 
-        void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName);
+        void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescriptionList, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName);
     }
 }
