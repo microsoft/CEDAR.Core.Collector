@@ -4,12 +4,12 @@ namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class OpenTelemetryTrace
     {
-        public static OpenTelemetryTrace FunctionInvocation = new OpenTelemetryTrace("FunctionInvocation");
-        public static OpenTelemetryTrace ProccessCollectionNode = new OpenTelemetryTrace("ProccessCollectionNode");
-        public static OpenTelemetryTrace Heartbeat = new OpenTelemetryTrace("Heartbeat");
-        public static OpenTelemetryTrace Request = new OpenTelemetryTrace("Request");
+        public static readonly OpenTelemetryTrace FunctionInvocation = new OpenTelemetryTrace("FunctionInvocation");
+        public static readonly OpenTelemetryTrace ProccessCollectionNode = new OpenTelemetryTrace("ProccessCollectionNode");
+        public static readonly OpenTelemetryTrace Heartbeat = new OpenTelemetryTrace("Heartbeat");
+        public static readonly OpenTelemetryTrace Request = new OpenTelemetryTrace("Request");
 
-        public string Name;
+        public string Name { get; private set; }
 
         protected OpenTelemetryTrace(string name)
         {
