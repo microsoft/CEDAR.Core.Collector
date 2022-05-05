@@ -10,9 +10,9 @@ namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class OpenTelemetryMetric
     {
-        public static TelemetryMetric<long> RecordCounter;
-        public static TelemetryMetric<long> HeartbeatCounter;
-        public static TelemetryMetric<double> RateLimitDelay;
+        public static readonly TelemetryMetric<long> RecordCounter;
+        public static readonly TelemetryMetric<long> HeartbeatCounter;
+        public static readonly TelemetryMetric<double> RateLimitDelay;
 
         private const string SUBSCRIPTION_KEY = "Metrics";
 

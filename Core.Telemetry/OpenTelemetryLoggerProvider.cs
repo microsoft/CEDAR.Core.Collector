@@ -7,6 +7,7 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.CloudMine.Core.Telemetry
 {
+    // OpenTelemetry Los documentation: https://eng.ms/docs/products/geneva/collect/instrument/opentelemetrydotnet/otel-logs
     public class OpenTelemetryLoggerProvider : ILoggerProvider
     {
         private readonly ILoggerFactory loggerFactory;
@@ -32,7 +33,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     break;
 
                 default:
-
+                    // default to console exporter for local debuugging.
                     this.loggerFactory = LoggerFactory.Create(builder =>
                     {
                         builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddConsoleExporter());

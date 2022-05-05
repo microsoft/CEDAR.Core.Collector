@@ -97,8 +97,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             }
             finally
             {
-                TimeSpan requestDuration = requestTrace.Duration;
-                requestTrace.AddTag("Duration", requestDuration);
+                requestTrace.AddTag("Duration", requestTrace.Duration.TotalMilliseconds.ToString());
             }
         }
     }

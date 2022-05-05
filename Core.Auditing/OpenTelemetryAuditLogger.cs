@@ -13,35 +13,35 @@ namespace Microsoft.CloudMine.Core.Auditing
 
     public class TargetResource
     {
-        public string type;
-        public string name;
-        public string cluster;
-        public string region;
+        public string Type { get; private set; }
+        public string Name { get; private set; }
+        public string Cluster { get; private set; }
+        public string Region { get; private set; }
 
         public TargetResource(string type, string name, string cluster = null, string region = null)
         {
-            this.type = type;
-            this.name = name;
-            this.cluster = cluster;
-            this.region = region;
+            this.Type = type;
+            this.Name = name;
+            this.Cluster = cluster;
+            this.Region = region;
         }
     }
 
     public class CallerIdentity
     {
-        public CallerIdentityType type;
-        public string name;
-        public string description;
+        public CallerIdentityType Type { get; private set; }
+        public string Name { get; private set; }
+        public string description { get; private set; }
 
         public CallerIdentity(CallerIdentityType type, string name, string description = null)
         {
-            this.type = type;
-            this.name = name;
+            this.Type = type;
+            this.Name = name;
             this.description = description;
         }
     }
 
-    public class IfxAuditLogger : IAuditLogger
+    public class OpenTelemetryAuditLogger : IAuditLogger
     {
         private ILogger logger;
         private string webAppName;
@@ -53,7 +53,7 @@ namespace Microsoft.CloudMine.Core.Auditing
 
         private static readonly AuditLoggerFactory AuditLoggerFactory = AuditLoggerFactory.Create(AuditOptions.DefaultForEtw);
 
-        public IfxAuditLogger()
+        public OpenTelemetryAuditLogger()
         {
             this.logger = AuditLoggerFactory.CreateDataPlaneLogger(); // AsmAuditDP Jarvis table
             this.ipAddress = FetchIPAddress();
@@ -72,12 +72,12 @@ namespace Microsoft.CloudMine.Core.Auditing
 
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
-                auditRecord.AddCallerIdentity(callerIdentity.type, callerIdentity.name, callerIdentity.description);
+                auditRecord.AddCallerIdentity(callerIdentity.Type, callerIdentity.Name, callerIdentity.description);
             }
 
             foreach (TargetResource targetResource in targetResources)
             {
-                auditRecord.AddTargetResource(targetResource.type, targetResource.name);
+                auditRecord.AddTargetResource(targetResource.Type, targetResource.Name);
             }
 
             auditRecord.OperationAccessLevel = "GroupManager";
@@ -97,7 +97,7 @@ namespace Microsoft.CloudMine.Core.Auditing
 
         public void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType)
         {
-            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Read, tokenType + TokenGenerationOperation, operationResult, operationResultDescription, callerIdentities, targetResources);
+            LogAuditEvent(telemetryClient, OperationCategory.Authorization, OperationType.Create, tokenType + TokenGenerationOperation, operationResult, operationResultDescription, callerIdentities, targetResources);
         }
 
         public void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities)

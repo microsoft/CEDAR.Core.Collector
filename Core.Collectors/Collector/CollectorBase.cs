@@ -166,7 +166,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 }
             }
 
-            trace.AddTag("Duration", trace.Duration.TotalSeconds.ToString());
+            trace.AddTag("Duration", trace.Duration.TotalMilliseconds.ToString());
             return batchingHttpRequest.HasNext;
         }
 
