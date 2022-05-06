@@ -19,16 +19,18 @@ namespace Microsoft.CloudMine.Core.Telemetry
         
         static OpenTelemetryHelpers()
         {
-            OpenTelemetryExporter = GetEnvironmentVariableWithDefault("OpenTelemetryExporter", defaultValue: "*");
-            AppEnvironment = GetEnvironmentVariableWithDefault("Environment", defaultValue: "*");
-            Deployment = GetEnvironmentVariableWithDefault("Deployment", defaultValue: "*");
-            Region = GetEnvironmentVariableWithDefault("Region", defaultValue: "*");
+
+
+            OpenTelemetryExporter = Environment.GetEnvironmentVariable("OpenTelemetryExporter") ?? "*";
+            AppEnvironment = Environment.GetEnvironmentVariable("Environment") ?? "*";
+            Deployment = Environment.GetEnvironmentVariable("Deployment") ?? "*";
+            Region = Environment.GetEnvironmentVariable("Region") ?? "*";
 
             // if environment variables for exporting to geneva are not set, revert to default exporter.
             try
             {
-                Product = GetEnvironmentVariableWithDefault("Product");
-                Service = GetEnvironmentVariableWithDefault("Service");
+                Product = Environment.GetEnvironmentVariable("Product");
+                Service = Environment.GetEnvironmentVariable("Service");
             }
             catch
             {
@@ -67,23 +69,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             tags.Add("Deployment", Deployment);
             tags.Add("Region", Region);
             counter.Add(value, tags);
-        }
-
-        public static string GetEnvironmentVariableWithDefault(string variable, string defaultValue = null)
-        {
-            try
-            {
-                return Environment.GetEnvironmentVariable(variable);
-            }
-            catch (ArgumentNullException)
-            {
-                if (defaultValue == null)
-                {
-                    throw;
-                }
-
-                return defaultValue;
-            }
         }
     }
 }
