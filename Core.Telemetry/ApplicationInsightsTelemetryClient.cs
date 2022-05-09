@@ -69,7 +69,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             properties.Add("Message", message);
 
             this.telemetryClient.TrackException(exception, properties);
-            this.logger.LogError(exception.Message, string.Join(Environment.NewLine, properties));
+            this.logger.LogError(exception, "Exception", string.Join(Environment.NewLine, properties));
         }
 
         public void LogWarning(string message, IDictionary<string, string> additionalProperties = null)
