@@ -19,20 +19,14 @@ namespace Microsoft.CloudMine.Core.Telemetry
         
         static OpenTelemetryHelpers()
         {
-
-
             OpenTelemetryExporter = Environment.GetEnvironmentVariable("OpenTelemetryExporter") ?? "*";
             AppEnvironment = Environment.GetEnvironmentVariable("Environment") ?? "*";
             Deployment = Environment.GetEnvironmentVariable("Deployment") ?? "*";
             Region = Environment.GetEnvironmentVariable("Region") ?? "*";
+            Product = Environment.GetEnvironmentVariable("Product");
+            Service = Environment.GetEnvironmentVariable("Service");
 
-            // if environment variables for exporting to geneva are not set, revert to default exporter.
-            try
-            {
-                Product = Environment.GetEnvironmentVariable("Product");
-                Service = Environment.GetEnvironmentVariable("Service");
-            }
-            catch
+            if( Product == null || Service == null )
             {
                 OpenTelemetryExporter = "*";
                 Product = "*";
