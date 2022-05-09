@@ -4,10 +4,10 @@
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using Newtonsoft.Json;
 
 namespace Microsoft.CloudMine.Core.Telemetry
 {

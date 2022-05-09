@@ -31,13 +31,13 @@ namespace Microsoft.CloudMine.Core.Auditing
     {
         public CallerIdentityType Type { get; private set; }
         public string Name { get; private set; }
-        public string description { get; private set; }
+        public string Description { get; private set; }
 
         public CallerIdentity(CallerIdentityType type, string name, string description = null)
         {
             this.Type = type;
             this.Name = name;
-            this.description = description;
+            this.Description = description;
         }
     }
 
@@ -72,7 +72,7 @@ namespace Microsoft.CloudMine.Core.Auditing
 
             foreach (CallerIdentity callerIdentity in callerIdentities)
             {
-                auditRecord.AddCallerIdentity(callerIdentity.Type, callerIdentity.Name, callerIdentity.description);
+                auditRecord.AddCallerIdentity(callerIdentity.Type, callerIdentity.Name, callerIdentity.Description);
             }
 
             foreach (TargetResource targetResource in targetResources)
