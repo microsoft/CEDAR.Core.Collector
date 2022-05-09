@@ -65,6 +65,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         protected abstract Task InitializeInternalAsync();
         protected abstract Task<StreamWriter> NewStreamWriterAsync(string suffix);
         protected abstract Task NotifyCurrentOutputAsync();
+        public abstract void AddFilePath(string filePath);
 
         public IEnumerable<string> OutputPaths => this.outputPaths;
 
