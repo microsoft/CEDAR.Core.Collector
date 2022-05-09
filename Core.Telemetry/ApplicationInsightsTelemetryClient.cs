@@ -15,7 +15,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
     {
         private readonly TelemetryClient telemetryClient;
         private readonly string sessionId;
-        private readonly ILogger logger;
+        protected readonly ILogger logger;
 
         public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId, ILogger logger)
         {
