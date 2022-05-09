@@ -69,9 +69,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 {
                     foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(result.request))
                     {
-                        if (allowListCollectionNode is T t)
+                        if (allowListCollectionNode is T typedAllowListCollectionNode)
                         {
-                            await this.ProcessAsync(t).ConfigureAwait(false);
+                            await this.ProcessAsync(typedAllowListCollectionNode).ConfigureAwait(false);
                         }
                     }
                     break;
