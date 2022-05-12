@@ -1,20 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
-using Microsoft.Cloud.InstrumentationFramework;
 using Microsoft.CloudMine.Core.Telemetry;
+using OpenTelemetry.Audit.Geneva;
+using System.Collections.Generic;
 
 namespace Microsoft.CloudMine.Core.Auditing
 {
     public interface IAuditLogger
     {
-        void Initialize(string tenantIdentity, string roleIdentity);
+        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string tokenType);
 
-        void LogApplicationAuditEvent(ITelemetryClient telemetryClient, AuditMandatoryProperties auditMandatoryProperties, AuditOptionalProperties auditOptionalProperties = null);
+        void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities);
 
-        void LogTokenGenerationAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string tokenType);
-
-        void LogCertificateFetchAuditEvent(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities);
-
-        void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, TargetResource[] targetResources, CallerIdentity[] callerIdentities, string operationName);
+        void LogRequest(ITelemetryClient telemetryClient, OperationResult operationResult, string operationResultDescription, List<TargetResource> targetResources, List<CallerIdentity> callerIdentities, string operationName);
     }
 }

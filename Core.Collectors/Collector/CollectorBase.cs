@@ -4,12 +4,13 @@
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.IO;
-using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.CloudMine.Core.Collectors.Web;
+using Microsoft.CloudMine.Core.Telemetry;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -57,6 +58,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public async Task<bool> ProcessAsync(T collectionNode, long maxPageCount)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity(OpenTelemetryTrace.ProccessCollectionNode).Start();
+            trace.AddTag("ApiName", collectionNode.ApiName);
+            trace.AddTag("RecordType", collectionNode.RecordType);
+
             IBatchingHttpRequest batchingHttpRequest = this.WrapIntoBatchingHttpRequest(collectionNode);
             long counter = 0;
             bool haltCollection = false;
@@ -165,6 +170,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 }
             }
 
+            trace.AddTag("Duration", trace.Duration.TotalMilliseconds.ToString());
             return batchingHttpRequest.HasNext;
         }
 
