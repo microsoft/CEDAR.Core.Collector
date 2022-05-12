@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
 {
+    // warning - this is ICloneable with a not perfect implementation of cloning - sooooooo consider yourself warned
+    // if you add anything here remember about cloning in the inheriting classes...
     public abstract class CollectionNode : ICloneable
     {
         protected CollectionNode()
@@ -48,12 +50,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         /// Provides a way to potentially halt collection (stop batching) depending on the current record. This is helpful e.g., when the records are ordered by date and we want to only collect until some specific date.
         /// </summary>
         public Func<JObject, bool> HaltCollection { get; set; } = record => false;
-
+        /// <summary>
+        /// Provides a way to potentially halt collection (stop batching) depending on the full API response. This is helpful e.g., when the response contains an information about existance of next batch.
+        /// </summary>
+        public Func<JObject, bool> HaltCollectionFromResponse { get; set; } = response => false;
         /// <summary>
         /// Provides a way to allow-list non-success HTTP responses.
         /// </summary>
         public List<HttpResponseSignature> AllowlistedResponses = new List<HttpResponseSignature>();
-
         /// <summary>
         /// Provides a way to allow-list HTTP exceptions.
         /// </summary>

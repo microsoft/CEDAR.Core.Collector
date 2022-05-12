@@ -28,7 +28,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private List<string> previousRecordStrings;
         private int previousRecordCount;
 
-        public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
+        protected CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
         {
             this.authentication = authentication;
             this.telemetryClient = telemetryClient;
@@ -74,9 +74,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 {
                     foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(result.request))
                     {
-                        if (allowListCollectionNode is T)
+                        if (allowListCollectionNode is T typedAllowListCollectionNode)
                         {
-                            await this.ProcessAsync((T) allowListCollectionNode).ConfigureAwait(false);
+                            await this.ProcessAsync(typedAllowListCollectionNode).ConfigureAwait(false);
                         }
                     }
                     break;
@@ -112,6 +112,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                         }
                     }
 
+                    // this full response level based halt callback potentialy will short circuit the check in the foreach loop
+                    // if this already returns true, we don't need to check halt condition for the records even if a callback was provided
+                    haltCollection = haltCollection || collectionNode.HaltCollectionFromResponse(serializedResponse.Response);
+
                     foreach (JObject record in records)
                     {
                         haltCollection = haltCollection || collectionNode.HaltCollection(record);
@@ -123,7 +127,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     foreach (CollectionNode childCollectionNode in children)
                     {
                         T childNodeClone = (T)childCollectionNode.Clone();
-                        // Add the context carried over the parent node. 
+                        // Add the context carried over the parent node.
                         foreach (KeyValuePair<string, JToken> parentMetadataItem in collectionNode.AdditionalMetadata)
                         {
                             string parentMetadataName = parentMetadataItem.Key;
@@ -215,12 +219,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record)
         {
-            bool lastBatch = !(batchingHttpRequest.HasNext) || haltCollection;
+            bool lastBatch = !batchingHttpRequest.HasNext || haltCollection;
             string identityForLogging = batchingHttpRequest.PreviousIdentity;
             if (Guid.TryParse(identityForLogging, out _))
             {
                 // Only log the first four characters of a GUID-based identity for security reasons.
-                identityForLogging = identityForLogging.Substring(0, 4);
+                identityForLogging = identityForLogging[..4];
             }
 
             RecordContext context = new RecordContext()
@@ -284,7 +288,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     childNodeClone.AdditionalMetadata.Add(newMetadataItem.Key, newMetadataItem.Value);
                 }
 
-                // Add the context carried over the parent node. 
+                // Add the context carried over the parent node.
                 foreach (KeyValuePair<string, JToken> parentMetadataItem in collectionNode.AdditionalMetadata)
                 {
                     string parentMetadataName = parentMetadataItem.Key;
