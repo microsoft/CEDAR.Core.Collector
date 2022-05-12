@@ -10,7 +10,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
     {
         private readonly Dictionary<string, string> context;
 
-        public TableEntityWithContext()
+        protected TableEntityWithContext()
         {
             this.context = new Dictionary<string, string>();
             this.AddContext("ObjectType", this.GetType().ToString());
