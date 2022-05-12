@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
 {
+    // warning - this is ICloneable with a not perfect implementation of cloning - sooooooo consider yourself warned
+    // if you add anything here remember about cloning in the inheriting classes...
     public abstract class CollectionNode : ICloneable
     {
         protected CollectionNode()
