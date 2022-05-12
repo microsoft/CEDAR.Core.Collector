@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.13.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.24" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.2.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Geneva" Version="1.2.3" />
   </ItemGroup>
 </Project>
