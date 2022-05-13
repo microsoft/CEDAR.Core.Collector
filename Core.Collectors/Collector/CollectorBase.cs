@@ -42,6 +42,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             this.previousRecordStrings = null;
         }
 
+        public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
+        {
+            this.authentication = authentication;
+            this.telemetryClient = telemetryClient;
+            this.recordWriters = recordWriters;
+
+            this.enableLoopDetection = enableLoopDetection;
+            this.previousRecordCount = -1;
+            this.previousRecordStrings = null;
+        }
+
         protected abstract IBatchingHttpRequest WrapIntoBatchingHttpRequest(T collectionNode);
 
         protected abstract Task<SerializedResponse> ParseResponseAsync(HttpResponseMessage response, T collectionNode);
@@ -75,7 +86,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                 if (!result.IsSuccess())
                 {
-                    logger.LogWarning("Response from {Url} was AllowListed with type {AllowListType}", result.request.RequestUri.ToString(), result.allowListStatus.GetType().Name);
+                    // Nullable temporary to make chnage in core non-breaking
+                    logger?.LogWarning("Response from {Url} was AllowListed with type {AllowListType}", result.request.RequestUri.ToString(), result.allowListStatus.GetType().Name);
 
                     foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(result.request))
                     {
