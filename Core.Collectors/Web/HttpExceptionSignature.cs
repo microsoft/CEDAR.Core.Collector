@@ -13,7 +13,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public class HttpExceptionSignature : IAllowListStatus
     {
-        public static HttpExceptionSignature RequestTimeoutException(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        public static HttpExceptionSignature RequestTimeoutException = new HttpExceptionSignature(exception =>
+        {
+            Type exceptionType = exception.GetType();
+            return exceptionType == typeof(TaskCanceledException) && exception.Message.Equals("The operation was canceled.");
+        });
+
+        public static HttpExceptionSignature RequestTimeout(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             static bool matcher(Exception exception)
             {
@@ -23,7 +29,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return new HttpExceptionSignature(matcher, continuation);
         }
 
-        public static HttpExceptionSignature SocketClosedException(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        public static HttpExceptionSignature SocketClosed(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             static bool matcher(Exception exception)
             {
@@ -33,7 +39,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return new HttpExceptionSignature(matcher, continuation);
         }
 
-        public static HttpExceptionSignature FailedToParseResponseException(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        public static HttpExceptionSignature FailedToParseResponse(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             static bool matcher(Exception exception)
             {
@@ -45,7 +51,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         private readonly Func<Exception, bool> matcher;
         private readonly Func<HttpRequestMessage, List<CollectionNode>> continuation;
-        protected HttpExceptionSignature(Func<Exception, bool> matcher, Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        public HttpExceptionSignature(Func<Exception, bool> matcher, Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             this.matcher = matcher;
             this.continuation = continuation;
