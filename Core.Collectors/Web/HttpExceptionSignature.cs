@@ -43,6 +43,36 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return new HttpExceptionSignature(matcher, continuation);
         }
 
+        public static HttpExceptionSignature RequestTimeout(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        {
+            static bool matcher(Exception exception)
+            {
+                Type exceptionType = exception.GetType();
+                return exceptionType == typeof(TaskCanceledException) && exception.Message.Equals("The operation was canceled.");
+            }
+            return new HttpExceptionSignature(matcher, continuation);
+        }
+
+        public static HttpExceptionSignature SocketClosed(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        {
+            static bool matcher(Exception exception)
+            {
+                Type exceptionType = exception.GetType();
+                return exceptionType == typeof(SocketException) && exception.Message.Equals("An existing connection was forcibly closed by the remote host.");
+            }
+            return new HttpExceptionSignature(matcher, continuation);
+        }
+
+        public static HttpExceptionSignature FailedToParseResponse(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+        {
+            static bool matcher(Exception exception)
+            {
+                Type exceptionType = exception.GetType();
+                return exceptionType == typeof(JsonReaderException) && exception.Message.StartsWith("Error reading JObject from JsonReader.");
+            }
+            return new HttpExceptionSignature(matcher, continuation);
+        }
+
         private readonly Func<Exception, bool> matcher;
         private readonly Func<HttpRequestMessage, List<CollectionNode>> continuation;
 
