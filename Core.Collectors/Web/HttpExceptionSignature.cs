@@ -13,12 +13,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 {
     public class HttpExceptionSignature : IAllowListStatus
     {
-        public static HttpExceptionSignature RequestTimeoutException = new HttpExceptionSignature(exception =>
-        {
-            Type exceptionType = exception.GetType();
-            return exceptionType == typeof(TaskCanceledException) && exception.Message.Equals("The operation was canceled.");
-        });
-
         public static HttpExceptionSignature RequestTimeout(Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             static bool matcher(Exception exception)
@@ -81,7 +75,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         private readonly Func<Exception, bool> matcher;
         private readonly Func<HttpRequestMessage, List<CollectionNode>> continuation;
-        public HttpExceptionSignature(Func<Exception, bool> matcher, Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
+
+        protected HttpExceptionSignature(Func<Exception, bool> matcher, Func<HttpRequestMessage, List<CollectionNode>> continuation = null)
         {
             this.matcher = matcher;
             this.continuation = continuation;
