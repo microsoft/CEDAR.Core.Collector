@@ -6,6 +6,7 @@ using Microsoft.CloudMine.Core.Collectors.Error;
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Microsoft.CloudMine.Core.Collectors.Web;
 using Microsoft.CloudMine.Core.Telemetry;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -23,16 +24,18 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private readonly List<IRecordWriter> recordWriters;
         private readonly ITelemetryClient telemetryClient;
         private readonly IAuthentication authentication;
+        private readonly ILogger logger;
 
         private readonly bool enableLoopDetection;
         private List<string> previousRecordStrings;
         private int previousRecordCount;
 
-        public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
-        {
+        public CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, ILogger logger, bool enableLoopDetection = true)
+        { 
             this.authentication = authentication;
             this.telemetryClient = telemetryClient;
             this.recordWriters = recordWriters;
+            this.logger = logger;
 
             this.enableLoopDetection = enableLoopDetection;
             this.previousRecordCount = -1;
@@ -72,6 +75,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                 if (!result.IsSuccess())
                 {
+                    logger.LogWarning("Response from {Url} was AllowListed with type {AllowListType}", result.request.RequestUri.ToString(), result.allowListStatus.GetType().Name);
+
                     foreach (CollectionNode allowListCollectionNode in result.allowListStatus.Continuation(result.request))
                     {
                         if (allowListCollectionNode is T)
