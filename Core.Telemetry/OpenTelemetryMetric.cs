@@ -13,6 +13,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
         public static readonly TelemetryMetric<long> RecordCounter;
         public static readonly TelemetryMetric<long> HeartbeatCounter;
         public static readonly TelemetryMetric<double> RateLimitDelay;
+        public static readonly TelemetryMetric<long> QueueLength;
 
         private const string SUBSCRIPTION_KEY = "Metrics";
 
@@ -26,6 +27,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             RecordCounter = new TelemetryMetric<long>("RecordCounter");
             HeartbeatCounter = new TelemetryMetric<long>("HeartbeatCounter");
             RateLimitDelay = new TelemetryMetric<double>("RateLimitDelay");
+            QueueLength = new TelemetryMetric<long>("QueueLength");
         }
 
         public static void Dispose()
