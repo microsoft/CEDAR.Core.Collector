@@ -26,7 +26,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly string blobRoot;
         private readonly string notificationQueuePrefix;
-        private readonly string storageConnectionEnvironmentVariable;
+        private readonly string storageAccountEnvironmentVariable;
 
         private CloudBlobContainer outContainer;
 
@@ -46,13 +46,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                           ITelemetryClient telemetryClient,
                                           T functionContext,
                                           ContextWriter<T> contextWriter,
-                                          string storageConnectionEnvironmentVariable)
+                                          string storageAccountEnvironmentVariable)
         {
             this.blobRoot = blobRoot;
             this.notificationQueuePrefix = notificationQueuePrefix;
             this.functionContext = functionContext;
             this.contextWriter = contextWriter;
-            this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
+            this.storageAccountEnvironmentVariable = storageAccountEnvironmentVariable;
 
             this.TelemetryClient = telemetryClient;
 
@@ -94,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private async Task InitializeAsync(RecordContext recordContext)
         {
-            this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountEnvironmentVariable).ConfigureAwait(false);
 
             await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
 
@@ -106,7 +106,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             string recordType = recordContext.RecordType;
             if (!this.writers.TryGetValue(recordType, out WriterState writerState))
             {
-                writerState = new WriterState(recordType, this.blobRoot, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageConnectionEnvironmentVariable, this.outContainer);
+                writerState = new WriterState(recordType, this.blobRoot, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageAccountEnvironmentVariable, this.outContainer);
                 await writerState.InitializeAsync().ConfigureAwait(false);
                 this.writers[recordType] = writerState;
             }
