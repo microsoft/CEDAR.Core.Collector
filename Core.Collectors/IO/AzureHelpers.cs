@@ -32,25 +32,25 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<string> GetBlobContentAsync(string container, string path, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<string> GetBlobContentAsync(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudBlockBlob blob = await GetBlob(container, path, storageAccountEnvironmentVariable);
+            CloudBlockBlob blob = await GetBlob(container, path, storageAccountNameEnvironmentVariable);
             string content = await blob.DownloadTextAsync();
             // Ignore BOM character at the beginning of the file, which can happen due to encoding.
             // '\uFEFF' => BOM
             return content[0] == '\uFEFF' ? content.Substring(1) : content;
         }
 
-        public static async Task<CloudBlockBlob> GetBlob(string container, string path, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<CloudBlockBlob> GetBlob(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudBlobContainer blobContainer = await GetBlobContainer(container, storageAccountEnvironmentVariable);
+            CloudBlobContainer blobContainer = await GetBlobContainer(container, storageAccountNameEnvironmentVariable);
             CloudBlockBlob blob = blobContainer.GetBlockBlobReference(path);
             return blob;
         }
 
-        public static async Task WriteToBlob(string container, string path, string content, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task WriteToBlob(string container, string path, string content, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudBlockBlob outputBlob = await GetBlob(container, path, storageAccountEnvironmentVariable);
+            CloudBlockBlob outputBlob = await GetBlob(container, path, storageAccountNameEnvironmentVariable);
             CloudBlobStream cloudBlobStream = await outputBlob.OpenWriteAsync().ConfigureAwait(false);
             using (StreamWriter writer = new StreamWriter(cloudBlobStream, Encoding.UTF8))
             {
@@ -58,30 +58,30 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<CloudBlobContainer> GetBlobContainer(string container, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<CloudBlobContainer> GetBlobContainer(string container, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountEnvironmentVariable);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable);
             CloudBlobClient storageBlobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer blobContainer = storageBlobClient.GetContainerReference(container);
             return blobContainer;
         }
 
-        public static async Task<CloudBlobContainer> GetStorageContainerAsync(string container, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<CloudBlobContainer> GetStorageContainerAsync(string container, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudBlobContainer storageContainer = await GetBlobContainer(container, storageAccountEnvironmentVariable);
+            CloudBlobContainer storageContainer = await GetBlobContainer(container, storageAccountNameEnvironmentVariable);
             await storageContainer.CreateIfNotExistsAsync().ConfigureAwait(false);
             return storageContainer;
         }
 
-        public static async Task<CloudQueue> GetStorageQueueCachedAsync(string queueName, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<CloudQueue> GetStorageQueueCachedAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             await CloudResourceLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                string key = $"{queueName}:{storageAccountEnvironmentVariable}";
+                string key = $"{queueName}:{storageAccountNameEnvironmentVariable}";
                 if (!CloudQueues.TryGetValue(key, out CachedCloudQueue cachedCloudQueue) || (DateTime.UtcNow - cachedCloudQueue.LastInitializationDateUtc) >= CloudResourcesInitializitonFrequency)
                 {
-                    CloudQueue cloudQueue = await GetStorageQueueAsync(queueName, storageAccountEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue cloudQueue = await GetStorageQueueAsync(queueName, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
                     cachedCloudQueue = new CachedCloudQueue(cloudQueue, DateTime.UtcNow);
                     CloudQueues[key] = cachedCloudQueue;
                 }
@@ -94,20 +94,20 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
         {
-            CloudStorageAccount storageAccount =await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountEnvironmentVariable, true);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             CloudQueue queue = queueClient.GetQueueReference(queueName);
             await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             return queue;
         }
 
-        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string prefix, string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string prefix, string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountEnvironmentVariable, true);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             QueueContinuationToken continuationToken = null;
             do
@@ -121,11 +121,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return result;
         }
 
-        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageAccountEnvironmentVariable = "StorageAccountName")
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountEnvironmentVariable, true);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             QueueContinuationToken continuationToken = null;
             do
