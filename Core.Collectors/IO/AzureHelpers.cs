@@ -35,7 +35,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static async Task<string> GetBlobContentAsync(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             CloudBlockBlob blob = await GetBlob(container, path, storageAccountNameEnvironmentVariable);
-            string content = await blob.DownloadTextAsync();
+            string content = await blob.DownloadTextAsync(System.Text.Encoding.Unicode, null, new BlobRequestOptions { LocationMode = WindowsAzure.Storage.RetryPolicies.LocationMode.PrimaryThenSecondary}, new OperationContext());
             // Ignore BOM character at the beginning of the file, which can happen due to encoding.
             // '\uFEFF' => BOM
             return content[0] == '\uFEFF' ? content.Substring(1) : content;
@@ -61,8 +61,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static async Task<CloudBlobContainer> GetBlobContainer(string container, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable);
-            CloudBlobClient storageBlobClient = storageAccount.CreateCloudBlobClient();
+            //CloudBlobClient storageBlobClient = storageAccount.CreateCloudBlobClient();
+            CloudBlobClient storageBlobClient = new CloudBlobClient(storageAccount.BlobStorageUri, storageAccount.Credentials);
             CloudBlobContainer blobContainer = storageBlobClient.GetContainerReference(container);
+
+            //BlobContainerClient containerClient = new BlobContainerClient(new Uri(storageAccount.BlobEndpoint), new DefaultAzureCredential())
             return blobContainer;
         }
 
