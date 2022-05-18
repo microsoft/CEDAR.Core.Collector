@@ -62,6 +62,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         /// Provides a way to allow-list HTTP exceptions.
         /// </summary>
         public List<HttpExceptionSignature> AllowlistedExceptions = new List<HttpExceptionSignature>();
+        /// <summary>
+        /// Additional retry rules that apply to this node only.
+        /// </summary>
+        public List<RetryRule> RetryRules = new List<RetryRule>();
 
         public abstract object Clone();
     }
