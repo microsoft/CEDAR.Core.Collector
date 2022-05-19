@@ -15,15 +15,28 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
     public class FixedHttpClient : IHttpClient
     {
         private readonly Dictionary<string, Tuple<HttpStatusCode, string>> requestToResponseMap;
+        private readonly Dictionary<string, Func<Tuple<HttpStatusCode, string>>> requestToResponseGeneratorMap;
 
         public FixedHttpClient()
         {
             this.requestToResponseMap = new Dictionary<string, Tuple<HttpStatusCode, string>>();
+            this.requestToResponseGeneratorMap = new Dictionary<string, Func<Tuple<HttpStatusCode, string>>>();
         }
 
         public void Reset()
         {
             this.requestToResponseMap.Clear();
+            this.requestToResponseGeneratorMap.Clear();
+        }
+
+        public void AddResponseGenerator(string requestUrl, Func<Tuple<HttpStatusCode, string>> resposneGenerator)
+        {
+            this.requestToResponseGeneratorMap.Add(requestUrl, resposneGenerator);
+        }
+
+        public void AddResponseGenerator(string requestUrl, string responseBody, Func<Tuple<HttpStatusCode, string>> resposneGenerator)
+        {
+            this.requestToResponseGeneratorMap.Add(requestUrl + responseBody, resposneGenerator);
         }
 
         public void AddResponse(string requestUrl, HttpStatusCode responseStatusCode, string responseMessage)
@@ -44,6 +57,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
                 {
                     StatusCode = response.Item1,
                     Content = new StringContent(response.Item2),
+                });
+            }
+
+            if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
+            {
+                (HttpStatusCode responseCode, string responseContent) = responseGenerator();
+                return Task.FromResult(new HttpResponseMessage()
+                {
+                    StatusCode = responseCode,
+                    Content = new StringContent(responseContent)
                 });
             }
 
@@ -85,6 +108,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
                     Content = new StringContent(response.Item2),
                 };
                 return Task.FromResult(result);
+            }
+
+            if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl + requestBody, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
+            {
+                (HttpStatusCode responseCode, string responseContent) = responseGenerator();
+                return Task.FromResult(new HttpResponseMessage()
+                {
+                    StatusCode = responseCode,
+                    Content = new StringContent(responseContent)
+                });
             }
 
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
