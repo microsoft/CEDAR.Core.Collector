@@ -31,19 +31,17 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                      ITelemetryClient telemetryClient,
                                      T functionContext,
                                      ContextWriter<T> contextWriter,
-                                     string storageAccountNameEnvironmentVariable = "StorageAccountName",
-                                     string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
+                                     string storageAccountNameEnvironmentVariable = "StorageAccountName")
             : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureBlob)
         {
             this.blobRoot = blobRoot;
             this.outputQueueName = outputQueueName;
             this.storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariable;
-            this.notificationQueueConnectionEnvironmentVariable = notificationQueueConnectionEnvironmentVariable;
         }
 
         protected override async Task InitializeInternalAsync()
         {
-            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.outputQueueName).ConfigureAwait(false);
             this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
         }
 

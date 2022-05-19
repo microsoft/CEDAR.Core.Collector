@@ -94,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
+        public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -103,7 +103,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return queue;
         }
 
-        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string prefix, string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string prefix, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
@@ -121,7 +121,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return result;
         }
 
-        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageAccountNameEnvironmentVariable = "StorageAccountNameEnvironmentVariable")
+        public static async Task<List<CloudQueue>> ListStorageQueuesAsync(string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
