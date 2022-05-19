@@ -9,7 +9,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public static class StorageAccountHelper
     {
-        private static readonly string endPointSuffix = "core.windows.net";
+        private static readonly string EndPointSuffix = "core.windows.net";
         public static CloudStorageAccount GetStorageAccount(string storageConnectionEnvironmentVariable)
         {
             string stagingBlobConnectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
@@ -19,18 +19,28 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public async static Task<CloudStorageAccount> GetStorageAccountUsingMsi(string storageAccountNameEnvironmentVariable = "StorageAccountName", bool isQueue = false)
         {
             string storageAccountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
-            var resource = isQueue ? AzureStorageResourceHelper.GetQueueResource(storageAccountName) : AzureStorageResourceHelper.GetBlobResource(storageAccountName);
-            var creds = await GetStorageCredentails(resource);
-            CloudStorageAccount storageAccount = new CloudStorageAccount(creds, storageAccountName, endPointSuffix, true);
+            string resource = isQueue ? GetQueueResource(storageAccountName) : GetBlobResource(storageAccountName);
+            StorageCredentials creds = await GetStorageCredentails(resource).ConfigureAwait(false);
+            CloudStorageAccount storageAccount = new CloudStorageAccount(creds, storageAccountName, EndPointSuffix, true);
             return storageAccount;            
         }
 
         private async static Task<StorageCredentials> GetStorageCredentails(string resource)
         {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var token = await azureServiceTokenProvider.GetAccessTokenAsync(resource);
+            AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
+            string token = await azureServiceTokenProvider.GetAccessTokenAsync(resource).ConfigureAwait(false);
             TokenCredential tokenCredential = new TokenCredential(token);
             return new StorageCredentials(tokenCredential);
+        }
+
+        public static string GetBlobResource(string storageAccountName)
+        {
+            return $"https://{storageAccountName}.blob.core.windows.net/";
+        }
+
+        public static string GetQueueResource(string storageAccountName)
+        {
+            return $"https://{storageAccountName}.queue.core.windows.net/";
         }
     }
 }
