@@ -8,6 +8,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
         public static readonly OpenTelemetryTrace ProccessCollectionNode = new OpenTelemetryTrace("CollectionNode");
         public static readonly OpenTelemetryTrace Heartbeat = new OpenTelemetryTrace("Heartbeat");
         public static readonly OpenTelemetryTrace Request = new OpenTelemetryTrace("Request");
+        public static readonly OpenTelemetryTrace LoadConfiguration = new OpenTelemetryTrace("LoadConfiguration");
 
         public string Name { get; private set; }
 

@@ -45,6 +45,12 @@ namespace Microsoft.CloudMine.Core.Telemetry
             return activity;
         }
 
+        public static Activity Fail(this Activity activity)
+        {
+            activity.SetTag("success", false);
+            return activity;
+        }
+
         public static int GetActivityDepth()
         { 
             if (Activity.Current?.GetTagItem("Depth") is int depth)
