@@ -49,7 +49,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         protected override async Task<StreamWriter> NewStreamWriterAsync(string suffix)
         {
-            this.outputBlob = this.outContainer.GetBlockBlobReference($"{this.OutputPathPrefix}{suffix}.json");
+            this.outputBlob = this.outContainer?.GetBlockBlobReference($"{this.OutputPathPrefix}{suffix}.json");
             CloudBlobStream cloudBlobStream = await this.outputBlob.OpenWriteAsync().ConfigureAwait(false);
             return new StreamWriter(cloudBlobStream, Encoding.UTF8);
         }
