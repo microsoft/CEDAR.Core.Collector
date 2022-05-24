@@ -43,7 +43,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         protected override async Task InitializeInternalAsync()
         {
-            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueUsingCSAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
             this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
         }
 
