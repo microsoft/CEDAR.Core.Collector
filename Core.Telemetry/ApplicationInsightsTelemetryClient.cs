@@ -15,13 +15,17 @@ namespace Microsoft.CloudMine.Core.Telemetry
     {
         private readonly TelemetryClient telemetryClient;
         private readonly string sessionId;
-        protected readonly ILogger logger;
 
         public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId, ILogger logger)
+            :this(telemetryClient, sessionId)
+        {
+            // TODO: Luke G - Remove this constructor, left in temporarilly to make change for non-breaking
+        }
+
+        public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId)
         {
             this.telemetryClient = telemetryClient;
             this.sessionId = sessionId;
-            this.logger = logger;
         }
 
         public void LogInformation(string message, IDictionary<string, string> additionalProperties = null)
@@ -37,7 +41,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             properties.Add("Message", message);
 
             this.telemetryClient.TrackTrace(message, SeverityLevel.Information, properties);
-            this.logger.LogInformation(message);
         }
 
         public void LogCritical(string message, IDictionary<string, string> additionalProperties = null)
@@ -53,7 +56,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             properties.Add("Message", message);
 
             this.telemetryClient.TrackTrace(message, SeverityLevel.Critical, properties);
-            this.logger.LogCritical(message);
         }
 
         public void TrackException(Exception exception, string message = null, IDictionary<string, string> additionalProperties = null)
@@ -69,7 +71,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             properties.Add("Message", message);
 
             this.telemetryClient.TrackException(exception, properties);
-            this.logger.LogError(exception, "Exception", string.Join(Environment.NewLine, properties));
         }
 
         public void LogWarning(string message, IDictionary<string, string> additionalProperties = null)
@@ -79,7 +80,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
                 {
-                    if ( properties.ContainsKey(property.Key) )
+                    if (properties.ContainsKey(property.Key))
                     {
                         properties[property.Key] = property.Value;
                     }
@@ -91,7 +92,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
 
             this.telemetryClient.TrackTrace(message, SeverityLevel.Warning, properties);
-            this.logger.LogWarning(message, string.Join(Environment.NewLine, properties));
         }
 
         public void TrackEvent(string eventName, IDictionary<string, string> additionalProperties = null)
@@ -113,7 +113,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
 
             this.telemetryClient.TrackEvent(eventName, properties);
-            this.logger.LogInformation("Custom Event {EventName} : {Properties}", eventName, JsonConvert.SerializeObject(properties));
         }
 
         public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
