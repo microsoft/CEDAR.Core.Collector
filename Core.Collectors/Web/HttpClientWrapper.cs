@@ -44,7 +44,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return this.GetAsync(requestUrl, authentication, productInfoHeaderValue, eTag, additionalHeaders: new Dictionary<string, string>());
         }
 
-        public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, Dictionary<string, string> additionalHeaders)
+        public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
         {
             return this.GetAsync(requestUrl, authentication, productInfoHeaderValue, eTag: string.Empty, additionalHeaders);
         }
