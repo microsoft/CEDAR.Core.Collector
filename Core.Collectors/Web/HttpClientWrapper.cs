@@ -83,7 +83,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             request.Headers.Authorization = new AuthenticationHeaderValue(authentication.Schema, authenticationHeader);
 
             // Setup additional headers
-            foreach (KeyValuePair<string, string> additionalHeader in authentication.AdditionalWebRequestHeaders.Union(additionalHeaders))
+            foreach (KeyValuePair<string, string> additionalHeader in authentication.AdditionalWebRequestHeaders.Concat(additionalHeaders))
             {
                 request.Headers.Add(additionalHeader.Key, additionalHeader.Value);
             }
