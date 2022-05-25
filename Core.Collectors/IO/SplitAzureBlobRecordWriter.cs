@@ -284,20 +284,20 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             private StreamWriter writer;
             private readonly CloudBlobContainer outContainer;
             private readonly string notificationQueuePrefix;
-            private readonly string storageConnectionEnvironmentVariable;
+            private readonly string storageAccountNameEnvironmentVariable;
 
             private int fileIndex;
             private bool initialized;
             private long recordCount;
             private DateTime minCollectionDateUtc;
 
-            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
+            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageAccountNameEnvironmentVariable, CloudBlobContainer outContainer)
             {
                 this.recordType = recordType;
                 this.blobRoot = blobRoot;
                 this.outputPath = outputPath;
                 this.notificationQueuePrefix = notificationQueuePrefix;
-                this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
+                this.storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariable;
                 this.outContainer = outContainer;
                 this.FinalizedOutputPaths = new List<string>();
 
@@ -328,7 +328,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, storageAccountNameEnvironmentVariable: this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
                     this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 
