@@ -6,6 +6,7 @@ using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -28,11 +29,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             this.httpClient.DefaultRequestHeaders.ConnectionClose = false;
         }
 
-        public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
-        {
-            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue: null);
-        }
-
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue)
         {
             return this.GetAsync(requestUrl, authentication, productInfoHeaderValue, eTag: string.Empty);
@@ -40,15 +36,30 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue)
         {
-            return this.MakeRequestAsync(requestUrl, HttpMethod.Post, requestBody, authentication, productInfoHeaderValue, eTag: string.Empty);
+            return this.PostAsync(requestUrl, requestBody, authentication, productInfoHeaderValue, additionalHeaders: new Dictionary<string, string>());
         }
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag)
         {
-            return this.MakeRequestAsync(requestUrl, HttpMethod.Get, requestBody: string.Empty, authentication, productInfoHeaderValue, eTag);
+            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue, eTag, additionalHeaders: new Dictionary<string, string>());
         }
 
-        private async Task<HttpResponseMessage> MakeRequestAsync(string requestUrl, HttpMethod method, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag)
+        public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
+        {
+            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue, eTag: string.Empty, additionalHeaders);
+        }
+
+        public Task<HttpResponseMessage> PostAsync(string requestUrl, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
+        {
+            return this.MakeRequestAsync(requestUrl, HttpMethod.Post, requestBody, authentication, productInfoHeaderValue, eTag: string.Empty, additionalHeaders);
+        }
+
+        private Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag, IDictionary<string, string> additionalHeaders)
+        {
+            return this.MakeRequestAsync(requestUrl, HttpMethod.Get, requestBody: string.Empty, authentication, productInfoHeaderValue, eTag, additionalHeaders);
+        }
+
+        private async Task<HttpResponseMessage> MakeRequestAsync(string requestUrl, HttpMethod method, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag, IDictionary<string, string> additionalHeaders)
         {
             using Activity requestTrace = OpenTelemetryTracer.GetActivity(OpenTelemetryTrace.Request).Start();
             requestTrace.AddTag("Url", requestUrl);
@@ -66,16 +77,24 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             }
 
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Setup authentication
             string authenticationHeader = await authentication.GetAuthorizationHeaderAsync().ConfigureAwait(false);
             request.Headers.Authorization = new AuthenticationHeaderValue(authentication.Schema, authenticationHeader);
-            foreach (KeyValuePair<string, string> additionalHeader in authentication.AdditionalWebRequestHeaders)
+
+            // Setup additional headers
+            foreach (KeyValuePair<string, string> additionalHeader in authentication.AdditionalWebRequestHeaders.Concat(additionalHeaders))
             {
                 request.Headers.Add(additionalHeader.Key, additionalHeader.Value);
             }
+
+            // Setup product info
             if (productInfoHeaderValue != null)
             {
                 request.Headers.UserAgent.Add(productInfoHeaderValue);
             }
+
+            // Setup e-tag
             if (!string.IsNullOrEmpty(eTag))
             {
                 request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(eTag));
