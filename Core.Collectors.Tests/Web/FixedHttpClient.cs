@@ -75,12 +75,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue)
         {
-            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue);
+            return this.GetAsync(requestUrl, authentication);
         }
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag)
         {
-            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue);
+            return this.GetAsync(requestUrl, authentication);
         }
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue)
@@ -90,14 +90,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
         {
-            return this.GetAsync(requestUrl, authentication, productInfoHeaderValue);
+            return this.GetAsync(requestUrl, authentication);
         }
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
         {
             return this.PostAsync(requestUrl, authentication, requestBody);
         }
-
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
