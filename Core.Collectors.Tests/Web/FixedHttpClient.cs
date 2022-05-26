@@ -88,6 +88,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             return this.PostAsync(requestUrl, authentication, requestBody);
         }
 
+        public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
+        {
+            return this.GetAsync(requestUrl, authentication);
+        }
+
+        public Task<HttpResponseMessage> PostAsync(string requestUrl, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, IDictionary<string, string> additionalHeaders)
+        {
+            return this.PostAsync(requestUrl, authentication, requestBody);
+        }
+
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
             if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out Tuple<HttpStatusCode, string> response))
