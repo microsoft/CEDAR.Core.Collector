@@ -21,7 +21,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
         public static Activity GetActivity(string name)
         {
             return ActivitySource.CreateActivity(name, ActivityKind.Internal).AddDefaultTags();
-
         }
 
         public static void Dispose()
