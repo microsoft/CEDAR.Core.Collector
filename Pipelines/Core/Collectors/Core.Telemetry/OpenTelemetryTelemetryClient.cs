@@ -1,36 +1,29 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 
 namespace Microsoft.CloudMine.Core.Telemetry
 {
-    public class ApplicationInsightsTelemetryClient : ITelemetryClient
+    public class OpenTelemetryTelemetryClient : ITelemetryClient
     {
-        private readonly TelemetryClient telemetryClient;
         private readonly string sessionId;
 
-        public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId, ILogger logger)
-            :this(telemetryClient, sessionId)
+        public OpenTelemetryTelemetryClient(string sessionId)
         {
-            // TODO: Luke G - Remove this constructor, left in temporarilly to make change for non-breaking
-        }
-
-        public ApplicationInsightsTelemetryClient(TelemetryClient telemetryClient, string sessionId)
-        {
-            this.telemetryClient = telemetryClient;
             this.sessionId = sessionId;
         }
 
         public void LogInformation(string message, IDictionary<string, string> additionalProperties = null)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity(message).Start();
+            trace.AddTag("Severity", "Information");
+
             Dictionary<string, string> properties = this.GetContextProperties();
+
             if (additionalProperties != null)
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
@@ -38,13 +31,18 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     properties.Add(property.Key, property.Value);
                 }
             }
-            properties.Add("Message", message);
 
-            this.telemetryClient.TrackTrace(message, SeverityLevel.Information, properties);
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
         }
 
         public void LogCritical(string message, IDictionary<string, string> additionalProperties = null)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity(message).Start();
+            trace.AddTag("Severity", "Critical");
+
             Dictionary<string, string> properties = this.GetContextProperties();
             if (additionalProperties != null)
             {
@@ -53,13 +51,24 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     properties.Add(property.Key, property.Value);
                 }
             }
-            properties.Add("Message", message);
 
-            this.telemetryClient.TrackTrace(message, SeverityLevel.Critical, properties);
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
         }
 
         public void TrackException(Exception exception, string message = null, IDictionary<string, string> additionalProperties = null)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity("Exception").Start();
+            trace.AddTag("ExceptionMessage", message);
+            trace.AddTag("ExceptionType", exception.GetType().Name);
+
+            if (exception.StackTrace != null)
+            {
+                trace.AddTag("ParsedStack", exception.StackTrace);
+            }
+
             Dictionary<string, string> properties = this.GetContextProperties();
             if (additionalProperties != null)
             {
@@ -68,37 +77,51 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     properties.Add(property.Key, property.Value);
                 }
             }
-            properties.Add("Message", message);
 
-            this.telemetryClient.TrackException(exception, properties);
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
         }
 
         public void LogWarning(string message, IDictionary<string, string> additionalProperties = null)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity(message).Start();
+            trace.AddTag("Severity", "Warning");
+
             Dictionary<string, string> properties = this.GetContextProperties();
             if (additionalProperties != null)
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
                 {
-                    properties[property.Key] = property.Value;
+                    properties.Add(property.Key, property.Value);
                 }
             }
 
-            this.telemetryClient.TrackTrace(message, SeverityLevel.Warning, properties);
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
         }
 
         public void TrackEvent(string eventName, IDictionary<string, string> additionalProperties = null)
         {
+            using Activity trace = OpenTelemetryTracer.GetActivity(eventName).Start();
+            trace.AddTag("Severity", "Event");
+
             Dictionary<string, string> properties = this.GetContextProperties();
             if (additionalProperties != null)
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
                 {
-                    properties[property.Key] = property.Value;
+                    properties.Add(property.Key, property.Value);
                 }
             }
 
-            this.telemetryClient.TrackEvent(eventName, properties);
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
         }
 
         public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
@@ -108,17 +131,14 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
         public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
         {
-            DependencyTelemetry dependencyTelemetry = new DependencyTelemetry()
-            {
-                Name = apiName,
-                Target = requestUrl,
-                Duration = duration,
-                ResultCode = responseMessage.StatusCode.ToString(),
-                Type = "External",
-            };
+            using Activity trace = OpenTelemetryTracer.GetActivity("Request").Start();
 
-            dependencyTelemetry.Properties.Add("RequestBody", requestBody);
-            dependencyTelemetry.Properties.Add("ETag", eTag);
+            Dictionary<string, string> properties = this.GetContextProperties();
+
+            foreach (string key in properties.Keys)
+            {
+                trace.AddTag(key, properties[key]);
+            }
 
             string identityToTrack = identity;
             bool guidIdentity = Guid.TryParse(identityToTrack, out Guid _);
@@ -127,20 +147,21 @@ namespace Microsoft.CloudMine.Core.Telemetry
                 identityToTrack = identityToTrack.Substring(0, 4); // For security reasons, if the identity is a GUID, only capture the first 4 characters in the telemetry.
             }
 
-            dependencyTelemetry.Properties.Add("Identity", identityToTrack);
-            foreach (KeyValuePair<string, string> property in this.GetContextProperties())
-            {
-                dependencyTelemetry.Properties.Add(property.Key, property.Value);
-            }
-            this.telemetryClient.TrackDependency(dependencyTelemetry);
+            trace.AddTag("ApiName", apiName);
+            trace.AddTag("Url", requestUrl);
+            trace.AddTag("Duration", duration);
+            trace.AddTag("ResultCode", responseMessage.StatusCode.ToString());
+            trace.AddTag("RequestBody", requestBody);
+            trace.AddTag("ETag", eTag);
+            trace.AddTag("Identity", identityToTrack);
         }
 
         private Dictionary<string, string> GetContextProperties()
         {
             return new Dictionary<string, string>()
-            {
-                { "SessionId", this.sessionId },
-            };
+                {
+                    { "SessionId", this.sessionId },
+                };
         }
     }
 }
