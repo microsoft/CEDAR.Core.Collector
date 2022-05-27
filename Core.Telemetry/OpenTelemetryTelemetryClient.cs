@@ -38,7 +38,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
         }
 
-
         public void LogCritical(string message, IDictionary<string, string> additionalProperties = null)
         {
             using Activity trace = OpenTelemetryTracer.GetActivity(message).Start();

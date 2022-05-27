@@ -80,14 +80,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
                 {
-                    if (properties.ContainsKey(property.Key))
-                    {
-                        properties[property.Key] = property.Value;
-                    }
-                    else
-                    {
-                        properties.Add(property.Key, property.Value);
-                    }
+                    properties[property.Key] = property.Value;
                 }
             }
 
@@ -101,14 +94,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             {
                 foreach (KeyValuePair<string, string> property in additionalProperties)
                 {
-                    if (properties.ContainsKey(property.Key))
-                    {
-                        properties[property.Key] = property.Value;
-                    }
-                    else
-                    {
-                        properties.Add(property.Key, property.Value);
-                    }
+                    properties[property.Key] = property.Value;
                 }
             }
 
