@@ -18,6 +18,11 @@ namespace Microsoft.CloudMine.Core.Telemetry
             return ActivitySource.CreateActivity(trace.Name, ActivityKind.Internal).AddDefaultTags();
         }
 
+        public static Activity GetActivity(string name)
+        {
+            return ActivitySource.CreateActivity(name, ActivityKind.Internal).AddDefaultTags();
+        }
+
         public static void Dispose()
         {
             TracerProvider.Dispose();
