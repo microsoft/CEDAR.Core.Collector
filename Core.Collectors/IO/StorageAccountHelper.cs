@@ -10,7 +10,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
     public static class StorageAccountHelper
     {
         private static readonly string EndPointSuffix = "core.windows.net";
-        public static CloudStorageAccount GetStorageAccountUsingCS(string storageConnectionEnvironmentVariable)
+        public static CloudStorageAccount GetStorageAccount(string storageConnectionEnvironmentVariable)
         {
             string stagingBlobConnectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
             return CloudStorageAccount.Parse(stagingBlobConnectionString);

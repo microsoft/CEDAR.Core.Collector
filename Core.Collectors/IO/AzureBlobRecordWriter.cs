@@ -18,7 +18,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly string blobRoot;
         private readonly string outputQueueName;
-        private readonly string storageAccountNameEnvironmentVariable;
+        private readonly string storageConnectionEnvironmentVariable;
         private readonly string notificationQueueConnectionEnvironmentVariable;
 
         private CloudBlobContainer outContainer;
@@ -31,30 +31,25 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                      ITelemetryClient telemetryClient,
                                      T functionContext,
                                      ContextWriter<T> contextWriter,
-                                     string storageAccountNameEnvironmentVariable = "StorageAccountName",
+                                     string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
                                      string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
             : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureBlob)
         {
             this.blobRoot = blobRoot;
             this.outputQueueName = outputQueueName;
-            this.storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariable;
+            this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
             this.notificationQueueConnectionEnvironmentVariable = notificationQueueConnectionEnvironmentVariable;
         }
 
         protected override async Task InitializeInternalAsync()
         {
-            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueUsingCSAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
-            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+            this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
         }
 
         protected override async Task<StreamWriter> NewStreamWriterAsync(string suffix)
         {
-            if (this.outContainer == null)
-            {
-                this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
-            }
             this.outputBlob = this.outContainer.GetBlockBlobReference($"{this.OutputPathPrefix}{suffix}.json");
-
             CloudBlobStream cloudBlobStream = await this.outputBlob.OpenWriteAsync().ConfigureAwait(false);
             return new StreamWriter(cloudBlobStream, Encoding.UTF8);
         }
