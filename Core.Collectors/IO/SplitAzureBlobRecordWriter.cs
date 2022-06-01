@@ -94,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private async Task InitializeAsync(RecordContext recordContext)
         {
-            this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
 
             await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
 
@@ -328,7 +328,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, storageAccountNameEnvironmentVariable: this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedUsingMsiAsync(queueName, storageAccountNameEnvironmentVariable: this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
                     this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 

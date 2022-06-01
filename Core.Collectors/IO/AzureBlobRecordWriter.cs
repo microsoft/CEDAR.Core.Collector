@@ -44,14 +44,14 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         protected override async Task InitializeInternalAsync()
         {
             this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueUsingCSAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
-            this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
         }
 
         protected override async Task<StreamWriter> NewStreamWriterAsync(string suffix)
         {
             if (this.outContainer == null)
             {
-                this.outContainer = await AzureHelpers.GetStorageContainerAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+                this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountNameEnvironmentVariable).ConfigureAwait(false);
             }
             this.outputBlob = this.outContainer.GetBlockBlobReference($"{this.OutputPathPrefix}{suffix}.json");
 
