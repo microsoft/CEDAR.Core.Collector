@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Cache;
+using Microsoft.CloudMine.Core.Collectors.Utility;
 using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,24 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
 {
+    public static class CachingCollectorUtils
+    {
+        public const int CacheLookupMultiplier = 2;
+
+        internal static bool ShallIgnoreCache(bool ignoreCache, bool scheduledCollection, DateTime utcNow, DateTime sliceEndDateUtc, TimeSpan sliceCollectionFrequency)
+        {
+            // If ignoreCache == true, then skip cache check and force (re-)collection.
+
+            // If scheduledCollection == true, then skip cache check if the collection is "recent" (no need since by design there should not be any cache entry for it) and force collection.
+            // A collection is defined as a "recent" schedule if it is "scheduled" and if the end date of the schedule is more recent than the CacheLookupMultiplier * CollectionFrequency.
+            // This is an optimization. Normally, "scheduled" collections are expected to be a cache miss, so we don't want to do a cache lookup for them (especially considering there will be
+            // millions of them every hour). However, there had been cases previously where messages were put incorrectly that triggered a mass over-collection hours later. In this case,
+            // if the collection seems to be "lagging", we would like to start looking up in the cache, just in case these had been already collected.
+            bool recentSchedule = (utcNow - sliceEndDateUtc) <= (CacheLookupMultiplier * sliceCollectionFrequency);
+            return ignoreCache || (scheduledCollection && recentSchedule);
+        }
+    }
+
     public abstract class CachingCollector<TCollectionNode, TEndpointProgressTableEntity> where TCollectionNode : CollectionNode
                                                                                           where TEndpointProgressTableEntity : ProgressTableEntity
     {
@@ -27,11 +46,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public async Task<bool> ProcessAndCacheAsync(TCollectionNode collectionNode, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
         {
-            if (!ignoreCache && !scheduledCollection)
+            if (!CachingCollectorUtils.ShallIgnoreCache(ignoreCache, scheduledCollection, DateTime.UtcNow, progressRecord.EndDateUtc, progressRecord.CollectionFrequency))
             {
-                // If ignoreCache == true, then skip cache check and force (re-)collection.
-                // If scheduledCollection == true, then skip cache check (no need since by design there should not be any cache entry for it) and force collection.
-
                 TEndpointProgressTableEntity cachedProgressRecord = await this.RetrieveAsync(progressRecord).ConfigureAwait(false);
                 if (cachedProgressRecord != null && cachedProgressRecord.Succeeded)
                 {
