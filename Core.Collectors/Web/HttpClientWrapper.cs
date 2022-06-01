@@ -61,11 +61,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         private async Task<HttpResponseMessage> MakeRequestAsync(string requestUrl, HttpMethod method, string requestBody, IAuthentication authentication, ProductInfoHeaderValue productInfoHeaderValue, string eTag, IDictionary<string, string> additionalHeaders)
         {
-            using Activity requestTrace = OpenTelemetryTracer.GetActivity(OpenTelemetryTrace.Request).Start();
-            requestTrace.AddTag("Url", requestUrl);
-            requestTrace.AddTag("Method", method);
-            requestTrace.AddTag("AuthenticationType", authentication.GetType().ToString());
-
             HttpRequestMessage request = new HttpRequestMessage
             {
                 Method = method,
@@ -100,24 +95,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(eTag));
             }
 
-            try
-            {
-                HttpResponseMessage result = await this.httpClient.SendAsync(request).ConfigureAwait(false);
-                requestTrace.AddTag("StatusCode", result.StatusCode);
-                requestTrace.AddTag("Error", false);
-                return result;
-            }
-            catch (Exception e)
-            {
-                requestTrace.AddTag("ExceptionType", e.GetType().ToString());
-                requestTrace.AddTag("ExceptionMessage", e.Message);
-                requestTrace.AddTag("Error", true);
-                throw;
-            }
-            finally
-            {
-                requestTrace.AddTag("Duration", requestTrace.Duration.TotalMilliseconds.ToString());
-            }
+            HttpResponseMessage result = await this.httpClient.SendAsync(request).ConfigureAwait(false);
+            return result;
         }
     }
 }
