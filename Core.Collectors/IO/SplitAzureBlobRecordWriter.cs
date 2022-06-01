@@ -328,7 +328,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, storageConnectionEnvironmentVariable: this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
                     this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 

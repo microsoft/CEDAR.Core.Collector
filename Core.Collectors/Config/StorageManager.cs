@@ -76,16 +76,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         {
             JToken rootContainerToken = recordWriterToken.SelectToken("RootContainer");
             JToken notificationQueuePrefixToken = recordWriterToken.SelectToken("NotificationQueuePrefix");
-            JToken storageAccountNameEnvironmentVariableToken = recordWriterToken.SelectToken("StorageAccountNameEnvironmentVariable");
-            if (rootContainerToken == null || notificationQueuePrefixToken == null || storageAccountNameEnvironmentVariableToken == null)
+            JToken storageConnectionEnvironmentVariableToken = recordWriterToken.SelectToken("StorageConnectionEnvironmentVariable");
+            if (rootContainerToken == null || notificationQueuePrefixToken == null || storageConnectionEnvironmentVariableToken == null)
             {
-                throw new FatalTerminalException("SplitAzureBlob storage must provide a RootContainer, a NotificationQueuePrefix, and a StorageAccountNameEnvironmentVariable.");
+                throw new FatalTerminalException("SplitAzureBlob storage must provide a RootContainer, a NotificationQueuePrefix, and a StorageConnectionEnvironmentVariable.");
             }
 
             string rootContainer = rootContainerToken.Value<string>();
             string notificationQueuePrefix = notificationQueuePrefixToken.Value<string>();
-            string storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariableToken.Value<string>();
-            return new SplitAzureBlobRecordWriter<T>(rootContainer, notificationQueuePrefix, this.telemetryClient, functionContext, contextWriter, storageAccountNameEnvironmentVariable);
+            string storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariableToken.Value<string>();
+            return new SplitAzureBlobRecordWriter<T>(rootContainer, notificationQueuePrefix, this.telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable);
         }
 
 
@@ -98,16 +98,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 throw new FatalTerminalException("AzureBlob storage must provide a RootContainer and an OutputQueueName.");
             }
 
-            JToken storageAccountNameEnvironmentVariableToken = recordWriterToken.SelectToken("StorageAccountNameEnvironmentVariable");
+            JToken storageConnectionEnvironmentVariableToken = recordWriterToken.SelectToken("StorageConnectionEnvironmentVariable");
             JToken notificationQueueEnvironmentVariableToken = recordWriterToken.SelectToken("NotificationQueueEnvironmentVariable");
 
             // The following are optional (only used in Azure DevOps right now), so permit these values (tokens) to be null.
-            string storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariableToken?.Value<string>();
+            string storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariableToken?.Value<string>();
             string notificationQueueEnvironmentVariable = notificationQueueEnvironmentVariableToken?.Value<string>();
 
             string rootContainer = rootContainerToken.Value<string>();
             string outputQueueName = outputQueueNameToken.Value<string>();
-            return this.ConstructAzureBlobWriter(rootContainer, outputQueueName, identifier, this.telemetryClient, functionContext, contextWriter, storageAccountNameEnvironmentVariable, notificationQueueEnvironmentVariable);
+            return this.ConstructAzureBlobWriter(rootContainer, outputQueueName, identifier, this.telemetryClient, functionContext, contextWriter, storageConnectionEnvironmentVariable, notificationQueueEnvironmentVariable);
         }
 
         private IRecordWriter InitializeAdlsBulkRecordWriter<T>(JToken recordWriterToken, AdlsClient adlsClient, string identifier, T functionContext, ContextWriter<T> contextWriter) where T : FunctionContext
@@ -130,7 +130,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                                                                                ITelemetryClient telemetryClient,
                                                                                T functionContext,
                                                                                ContextWriter<T> contextWriter,
-                                                                               string storageAccountNameEnvironmentVariable,
+                                                                               string storageConnectionEnvironmentVariable,
                                                                                string notificationQueueEnvironmentVariable) where T : FunctionContext
         {
             return new AzureBlobRecordWriter<T>(rootContainer, outputQueueName, identifier, telemetryClient, functionContext, contextWriter);
