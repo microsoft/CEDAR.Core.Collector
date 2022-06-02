@@ -19,6 +19,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         private List<IRecordWriter> recordWriters;
         private readonly ITelemetryClient telemetryClient;
         private bool initialized;
+        private List<Exception> disposeExceptions;
         
         public StorageManager(JArray recordWritersArray, ITelemetryClient telemetryClient)
         {
@@ -26,6 +27,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
             this.recordWriters = new List<IRecordWriter>();
             this.telemetryClient = telemetryClient;
             this.initialized = false;
+            this.disposeExceptions = new List<Exception>();
         }
 
         public List<IRecordWriter> InitializeRecordWriters<T>(string identifier, T functionContext, ContextWriter<T> contextWriter, AdlsClient adlsClient) where T : FunctionContext
@@ -142,6 +144,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
         /// </summary>
         public async Task FinalizeRecordWritersAsync()
         {
+            if (disposeExceptions.Count == 1)
+            {
+                throw disposeExceptions[0];
+            }
+
+            if (disposeExceptions.Count > 1)
+            {
+                throw new AggregateException(disposeExceptions);
+            }
+
             foreach (IRecordWriter recordWriter in this.recordWriters)
             {
                 await recordWriter.FinalizeAsync().ConfigureAwait(false);
@@ -158,6 +170,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Config
                 }
                 catch (Exception exception)
                 {
+                    disposeExceptions.Add(exception);
                     this.telemetryClient.TrackException(exception, $"Failed to dispose of RecordWriter : {recordWriter.GetType()}");
                 }   
             }
