@@ -33,6 +33,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public async Task<bool> ProcessAndCacheAsync(IEnumerable<TCollectionNode> collectionNodes, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
         {
+            if (!collectionNodes.Any())
+            {
+                // Nothing to process, assume success without doing anything.
+                return true;
+            }
+
             if (!ignoreCache && !scheduledCollection)
             {
                 // If ignoreCache == true, then skip cache check and force (re-)collection.
