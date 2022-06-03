@@ -5,6 +5,7 @@ using Microsoft.CloudMine.Core.Collectors.Cache;
 using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Collector
@@ -25,8 +26,19 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             this.exceptions = new List<Exception>();
         }
 
-        public async Task<bool> ProcessAndCacheAsync(TCollectionNode collectionNode, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
+        public Task<bool> ProcessAndCacheAsync(TCollectionNode collectionNode, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
         {
+            return this.ProcessAndCacheAsync(new List<TCollectionNode>() { collectionNode }, progressRecord, ignoreCache, scheduledCollection);
+        }
+
+        public async Task<bool> ProcessAndCacheAsync(IEnumerable<TCollectionNode> collectionNodes, TEndpointProgressTableEntity progressRecord, bool ignoreCache, bool scheduledCollection)
+        {
+            if (!collectionNodes.Any())
+            {
+                // Nothing to process, assume success without doing anything.
+                return true;
+            }
+
             if (!ignoreCache && !scheduledCollection)
             {
                 // If ignoreCache == true, then skip cache check and force (re-)collection.
@@ -36,7 +48,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                 if (cachedProgressRecord != null && cachedProgressRecord.Succeeded)
                 {
                     // If the cache includes the progress record and record.Succeeded is true, skip re-collection since this endpoint was previously collected successfully.
-
+                    TCollectionNode collectionNode = collectionNodes.First();
                     Dictionary<string, string> properties = new Dictionary<string, string>()
                     {
                         { "ApiName", collectionNode.ApiName },
@@ -50,7 +62,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             progressRecord.Succeeded = false;
             try
             {
-                await this.collector.ProcessAsync(collectionNode).ConfigureAwait(false);
+                foreach (TCollectionNode collectionNode in collectionNodes)
+                {
+                    await this.collector.ProcessAsync(collectionNode).ConfigureAwait(false);
+                }
                 progressRecord.Succeeded = true;
                 await this.CacheAsync(progressRecord).ConfigureAwait(false);
                 return true;
@@ -59,6 +74,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             {
                 this.Exception = exception;
                 this.exceptions.Add(exception);
+                TCollectionNode collectionNode = collectionNodes.First();
                 this.telemetryClient.TrackException(exception, $"Failed to process and cache endpoint '{collectionNode.ApiName}'.");
                 await this.CacheAsync(progressRecord).ConfigureAwait(false);
                 return false;
