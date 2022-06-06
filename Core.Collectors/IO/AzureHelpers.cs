@@ -118,6 +118,15 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return queue;
         }
 
+        public static async Task<CloudQueue> GetStorageQueueUsingMsiAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
+        {
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true).ConfigureAwait(false);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            CloudQueue queue = queueClient.GetQueueReference(queueName);
+            await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return queue;
+        }
+
         public static async Task<CloudQueue> GetStorageQueueAsync(string queueName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             CloudStorageAccount storageAccount = StorageAccountHelper.GetStorageAccount(storageConnectionEnvironmentVariable);
