@@ -32,16 +32,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<string> GetBlobContentAsync(string container, string path, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
-        {
-            CloudBlockBlob blob = GetBlob(container, path, storageConnectionEnvironmentVariable);
-            string content = await blob.DownloadTextAsync();
-            // Ignore BOM character at the beginning of the file, which can happen due to encoding.
-            // '\uFEFF' => BOM
-            return content[0] == '\uFEFF' ? content.Substring(1) : content;
-        }
-
-        public static async Task<string> GetBlobContentUsingMsiAsync(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
+        public static async Task<string> GetBlobContentAsync(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             CloudBlockBlob blob = await GetBlobUsingMsi(container, path, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
             string content = await blob.DownloadTextAsync();
