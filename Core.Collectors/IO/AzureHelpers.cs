@@ -32,6 +32,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
+        //to be deleted
         public static async Task<string> GetBlobContentUsingMsiAsync(string container, string path, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
             CloudBlockBlob blob = await GetBlobUsingMsi(container, path, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
