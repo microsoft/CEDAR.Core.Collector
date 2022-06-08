@@ -97,6 +97,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return storageContainer;
         }
 
+        public static async Task<CloudBlobContainer> GetStorageContainerUsingMsiAsync(string container, string storageAccountNameEnvironmentVariable = "StorageAccountName")
+        {
+            CloudBlobContainer storageContainer = await GetBlobContainerUsingMsi(container, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+            await storageContainer.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return storageContainer;
+        }
+
         public static async Task<CloudQueue> GetStorageQueueCachedAsync(string queueName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             await CloudResourceLock.WaitAsync().ConfigureAwait(false);
@@ -106,6 +113,27 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 if (!CloudQueues.TryGetValue(key, out CachedCloudQueue cachedCloudQueue) || (DateTime.UtcNow - cachedCloudQueue.LastInitializationDateUtc) >= CloudResourcesInitializitonFrequency)
                 {
                     CloudQueue cloudQueue = await GetStorageQueueAsync(queueName, storageConnectionEnvironmentVariable).ConfigureAwait(false);
+                    cachedCloudQueue = new CachedCloudQueue(cloudQueue, DateTime.UtcNow);
+                    CloudQueues[key] = cachedCloudQueue;
+                }
+
+                return cachedCloudQueue.CloudQueue;
+            }
+            finally
+            {
+                CloudResourceLock.Release();
+            }
+        }
+
+        public static async Task<CloudQueue> GetStorageQueueCachedUsingMsiAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
+        {
+            await CloudResourceLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                string key = $"{queueName}:{storageAccountNameEnvironmentVariable}";
+                if (!CloudQueues.TryGetValue(key, out CachedCloudQueue cachedCloudQueue) || (DateTime.UtcNow - cachedCloudQueue.LastInitializationDateUtc) >= CloudResourcesInitializitonFrequency)
+                {
+                    CloudQueue cloudQueue = await GetStorageQueueUsingMsiAsync(queueName, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
                     cachedCloudQueue = new CachedCloudQueue(cloudQueue, DateTime.UtcNow);
                     CloudQueues[key] = cachedCloudQueue;
                 }
