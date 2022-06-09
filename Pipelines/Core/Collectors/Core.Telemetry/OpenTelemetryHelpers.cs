@@ -15,6 +15,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
         public static readonly string AppEnvironment;
         public static readonly string Deployment;
         public static readonly string Region;
+        public static readonly string SiteName;
         public static readonly string OpenTelemetryExporter;
         
         static OpenTelemetryHelpers()
@@ -23,10 +24,11 @@ namespace Microsoft.CloudMine.Core.Telemetry
             AppEnvironment = Environment.GetEnvironmentVariable("Environment") ?? "*";
             Deployment = Environment.GetEnvironmentVariable("Deployment") ?? "*";
             Region = Environment.GetEnvironmentVariable("Region") ?? "*";
+            SiteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") ?? "*";
             Product = Environment.GetEnvironmentVariable("Product");
             Service = Environment.GetEnvironmentVariable("Service");
 
-            if( Product == null || Service == null )
+            if ( Product == null || Service == null )
             {
                 OpenTelemetryExporter = "*";
                 Product = "*";
@@ -41,6 +43,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             activity.AddTag("Environment", AppEnvironment);
             activity.AddTag("Deployment", Deployment);
             activity.AddTag("Region", Region);
+            activity.AddTag("SiteName",SiteName);
             activity.AddTag("Depth", GetActivityDepth() + 1);
             return activity;
         }
@@ -68,6 +71,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
             tags.Add("Environment", AppEnvironment);
             tags.Add("Deployment", Deployment);
             tags.Add("Region", Region);
+            tags.Add("SiteName", SiteName);
             counter.Add(value, tags);
         }
     }
