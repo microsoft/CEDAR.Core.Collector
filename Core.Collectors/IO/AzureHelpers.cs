@@ -76,7 +76,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         public static async Task<CloudBlobContainer> GetBlobContainerUsingMsi(string container, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable).ConfigureAwait(false);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, "blob").ConfigureAwait(false);
             CloudBlobClient storageBlobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer blobContainer = storageBlobClient.GetContainerReference(container);
             return blobContainer;
@@ -120,7 +120,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         public static async Task<CloudQueue> GetStorageQueueUsingMsiAsync(string queueName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
         {
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true).ConfigureAwait(false);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, "queue").ConfigureAwait(false);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             CloudQueue queue = queueClient.GetQueueReference(queueName);
             await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
@@ -140,7 +140,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, "queue");
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             QueueContinuationToken continuationToken = null;
             do
@@ -176,7 +176,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         {
             List<CloudQueue> result = new List<CloudQueue>();
 
-            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, isQueue: true).ConfigureAwait(false);
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, "queue").ConfigureAwait(false);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             QueueContinuationToken continuationToken = null;
             do
@@ -193,6 +193,15 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static async Task<CloudTable> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
         {
             CloudStorageAccount storageAccount = StorageAccountHelper.GetStorageAccount(storageConnectionEnvironmentVariable);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference(tableName);
+            await table.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return table;
+        }
+
+        public static async Task<CloudTable> GetStorageTableUsingMsiAsync(string tableName, string storageAccountNameEnvironmentVariable = "StorageAccountName")
+        {
+            CloudStorageAccount storageAccount = await StorageAccountHelper.GetStorageAccountUsingMsi(storageAccountNameEnvironmentVariable, "table").ConfigureAwait(false);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference(tableName);
             await table.CreateIfNotExistsAsync().ConfigureAwait(false);

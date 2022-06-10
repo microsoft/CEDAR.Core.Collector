@@ -16,10 +16,22 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return CloudStorageAccount.Parse(stagingBlobConnectionString);
         }
 
-        public async static Task<CloudStorageAccount> GetStorageAccountUsingMsi(string storageAccountNameEnvironmentVariable = "StorageAccountName", bool isQueue = false)
+        public async static Task<CloudStorageAccount> GetStorageAccountUsingMsi(string storageAccountNameEnvironmentVariable = "StorageAccountName", string resourceType = "blob")
         {
             string storageAccountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
-            string resource = isQueue ? GetQueueResource(storageAccountName) : GetBlobResource(storageAccountName);
+            string resource = string.Empty;
+            switch (resourceType)
+            {
+                case "blob":
+                    resource = GetBlobResource(storageAccountName);
+                    break;
+                case "queue":
+                    resource = GetQueueResource(storageAccountName);
+                    break;
+                case "table":
+                    resource = GetTableResource(storageAccountName);
+                    break;
+            }
             StorageCredentials creds = await GetStorageCredentails(resource).ConfigureAwait(false);
             CloudStorageAccount storageAccount = new CloudStorageAccount(creds, storageAccountName, EndPointSuffix, true);
             return storageAccount;            
@@ -41,6 +53,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static string GetQueueResource(string storageAccountName)
         {
             return $"https://{storageAccountName}.queue.core.windows.net/";
+        }
+
+        public static string GetTableResource(string storageAccountName)
+        {
+            return $"https://{storageAccountName}.table.core.windows.net/";
         }
     }
 }
