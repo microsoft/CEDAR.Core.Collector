@@ -15,17 +15,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
     {
         private readonly ITelemetryClient telemetryClient;
         private readonly string name;
-        private readonly string storageConnectionEnvironmentVariable;
+        private readonly string storageAccountEnvironmentVariable;
 
         private CloudTable table;
         private bool initialized;
 
-        public AzureTableCache(ITelemetryClient telemetryClient, string name, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        public AzureTableCache(ITelemetryClient telemetryClient, string name, string storageAccountEnvironmentVariable = "StorageAccountName")
         {
             this.telemetryClient = telemetryClient;
             this.initialized = false;
             this.name = name;
-            this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
+            this.storageAccountEnvironmentVariable = storageAccountEnvironmentVariable;
         }
 
         public AzureTableCache(ITelemetryClient telemetryClient, CloudTable table)
@@ -44,7 +44,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return;
             }
 
-            this.table = await AzureHelpers.GetStorageTableAsync(this.name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.table = await AzureHelpers.GetStorageTableUsingMsiAsync(this.name, this.storageAccountEnvironmentVariable).ConfigureAwait(false);
 
             this.initialized = true;
         }
