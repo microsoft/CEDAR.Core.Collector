@@ -64,7 +64,17 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return blob;
         }
 
-        public static async Task WriteToBlob(string container, string path, string content, string storageAccountNameEnvironmentVariable)
+        public static async Task WriteToBlob(string container, string path, string content)
+        {
+            CloudBlockBlob outputBlob = GetBlob(container, path);
+            CloudBlobStream cloudBlobStream = await outputBlob.OpenWriteAsync().ConfigureAwait(false);
+            using (StreamWriter writer = new StreamWriter(cloudBlobStream, Encoding.UTF8))
+            {
+                await writer.WriteLineAsync(content).ConfigureAwait(false);
+            }
+        }
+
+        public static async Task WriteToBlobUsingMsiAsync(string container, string path, string content, string storageAccountNameEnvironmentVariable)
         {
             CloudBlockBlob outputBlob = await GetBlobUsingMsiAsync(container, path, storageAccountNameEnvironmentVariable).ConfigureAwait(false);
             CloudBlobStream cloudBlobStream = await outputBlob.OpenWriteAsync().ConfigureAwait(false);
