@@ -26,7 +26,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly string blobRoot;
         private readonly string notificationQueuePrefix;
-        private readonly string storageAccountEnvironmentVariable;
+        private readonly string storageConnectionEnvironmentVariable;
 
         private CloudBlobContainer outContainer;
 
@@ -46,13 +46,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                           ITelemetryClient telemetryClient,
                                           T functionContext,
                                           ContextWriter<T> contextWriter,
-                                          string storageAccountEnvironmentVariable)
+                                          string storageConnectionEnvironmentVariable)
         {
             this.blobRoot = blobRoot;
             this.notificationQueuePrefix = notificationQueuePrefix;
             this.functionContext = functionContext;
             this.contextWriter = contextWriter;
-            this.storageAccountEnvironmentVariable = storageAccountEnvironmentVariable;
+            this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
 
             this.TelemetryClient = telemetryClient;
 
@@ -94,7 +94,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private async Task InitializeAsync(RecordContext recordContext)
         {
-            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
 
             await this.GetOrAddWriterAsync(recordContext).ConfigureAwait(false);
 
@@ -106,7 +106,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             string recordType = recordContext.RecordType;
             if (!this.writers.TryGetValue(recordType, out WriterState writerState))
             {
-                writerState = new WriterState(recordType, this.blobRoot, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageAccountEnvironmentVariable, this.outContainer);
+                writerState = new WriterState(recordType, this.blobRoot, this.OutputPathPrefix, this.notificationQueuePrefix, this.storageConnectionEnvironmentVariable, this.outContainer);
                 await writerState.InitializeAsync().ConfigureAwait(false);
                 this.writers[recordType] = writerState;
             }
@@ -284,20 +284,20 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             private StreamWriter writer;
             private readonly CloudBlobContainer outContainer;
             private readonly string notificationQueuePrefix;
-            private readonly string storageAccountEnvironmentVariable;
+            private readonly string storageConnectionEnvironmentVariable;
 
             private int fileIndex;
             private bool initialized;
             private long recordCount;
             private DateTime minCollectionDateUtc;
 
-            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageAccountEnvironmentVariable, CloudBlobContainer outContainer)
+            public WriterState(string recordType, string blobRoot, string outputPath, string notificationQueuePrefix, string storageConnectionEnvironmentVariable, CloudBlobContainer outContainer)
             {
                 this.recordType = recordType;
                 this.blobRoot = blobRoot;
                 this.outputPath = outputPath;
                 this.notificationQueuePrefix = notificationQueuePrefix;
-                this.storageAccountEnvironmentVariable = storageAccountEnvironmentVariable;
+                this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
                 this.outContainer = outContainer;
                 this.FinalizedOutputPaths = new List<string>();
 
@@ -328,7 +328,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         // Azure queue names are limited with 63 characters. Use only the first 63 characters.
                         queueName = queueName.Substring(0, 63);
                     }
-                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedUsingMsiAsync(queueName, this.storageAccountEnvironmentVariable).ConfigureAwait(false);
+                    CloudQueue queue = await AzureHelpers.GetStorageQueueCachedUsingMsiAsync(queueName, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
                     this.notificationQueue = new CloudQueueWrapper(queue);
                 }
 

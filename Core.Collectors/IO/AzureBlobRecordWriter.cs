@@ -18,7 +18,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly string blobRoot;
         private readonly string outputQueueName;
-        private readonly string storageAccountEnvironmentVariable;
+        private readonly string storageConnectionEnvironmentVariable;
         private readonly string notificationQueueConnectionEnvironmentVariable;
 
         private CloudBlobContainer outContainer;
@@ -31,20 +31,20 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                                      ITelemetryClient telemetryClient,
                                      T functionContext,
                                      ContextWriter<T> contextWriter,
-                                     string storageAccountEnvironmentVariable = "StorageAccountName",
+                                     string storageConnectionEnvironmentVariable = "AzureWebJobsStorage",
                                      string notificationQueueConnectionEnvironmentVariable = "AzureWebJobsStorage")
             : base(identifier, telemetryClient, functionContext, contextWriter, RecordSizeLimit, FileSizeLimit, source: RecordWriterSource.AzureBlob)
         {
             this.blobRoot = blobRoot;
             this.outputQueueName = outputQueueName;
-            this.storageAccountEnvironmentVariable = storageAccountEnvironmentVariable;
+            this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
             this.notificationQueueConnectionEnvironmentVariable = notificationQueueConnectionEnvironmentVariable;
         }
 
         protected override async Task InitializeInternalAsync()
         {
             this.queue = string.IsNullOrWhiteSpace(this.notificationQueueConnectionEnvironmentVariable) ? null : await AzureHelpers.GetStorageQueueAsync(this.outputQueueName, this.notificationQueueConnectionEnvironmentVariable).ConfigureAwait(false);
-            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageAccountEnvironmentVariable).ConfigureAwait(false);
+            this.outContainer = await AzureHelpers.GetStorageContainerUsingMsiAsync(this.blobRoot, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
         }
 
         protected override async Task<StreamWriter> NewStreamWriterAsync(string suffix)

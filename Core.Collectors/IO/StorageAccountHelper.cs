@@ -16,7 +16,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return CloudStorageAccount.Parse(stagingBlobConnectionString);
         }
 
-        public async static Task<CloudStorageAccount> GetStorageAccountUsingMsi(string storageAccountNameEnvironmentVariable = "StorageAccountName", bool isQueue = false)
+        public async static Task<CloudStorageAccount> GetStorageAccountUsingMsiAsync(string storageAccountNameEnvironmentVariable = "StorageAccountName", bool isQueue = false)
         {
             string storageAccountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
             string resource = isQueue ? GetQueueResource(storageAccountName) : GetBlobResource(storageAccountName);
