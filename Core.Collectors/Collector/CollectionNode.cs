@@ -43,6 +43,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         /// </summary>
         public Func<JObject, Task<List<RecordWithContext>>> ProcessRecordAsync { get; set; } = record => Task.FromResult(new List<RecordWithContext>());
         /// <summary>
+        /// Produces a list of additional records (potentially empty, other than the record itself) from the current record (a single row of the response) as well as the full response.
+        /// </summary>
+        public Func<JObject, JObject, Task<List<RecordWithContext>>> ProcessRecordWithResponseAsync { get; set; } = (response, record) => Task.FromResult(new List<RecordWithContext>());
+        /// <summary>
         /// Prepares the current record (a single row of the response) for outputting.
         /// </summary>
         public Func<JObject, JObject> PrepareRecordForOutput { get; set; } = record => record;
