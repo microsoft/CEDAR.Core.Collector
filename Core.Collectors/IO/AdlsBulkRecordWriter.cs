@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
@@ -199,6 +199,17 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                         };
                         this.TelemetryClient.TrackEvent("FailedTransferStatus", transferStatusProperties);
                     }
+
+                    foreach (string filePath in this.filePaths)
+                    {
+                        Dictionary<string, string> blobUploadProperties = new Dictionary<string, string>()
+                        {
+                            { "BlobPath", filePath },
+                            { "Success", false.ToString() }
+                        };
+                        this.TelemetryClient.TrackEvent("BlobUpload", blobUploadProperties);
+                    }
+
                     throw new FatalException($"Cannot bulk upload '{Path.Combine(this.localRoot, fileName)}'.");
                 }
             }
@@ -217,6 +228,16 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 { "InputFilePaths", string.Join(",", this.filePaths) },
             };
             this.TelemetryClient.TrackEvent("AdlsUploadStats", properties);
+
+            foreach (string filePath in this.filePaths)
+            {
+                Dictionary<string, string> blobUploadProperties = new Dictionary<string, string>()
+                {
+                    { "BlobPath", filePath },
+                    { "Success", true.ToString() }
+                };
+                this.TelemetryClient.TrackEvent("BlobUpload", blobUploadProperties);
+            }
 
             return adlsDirectory;
         }
