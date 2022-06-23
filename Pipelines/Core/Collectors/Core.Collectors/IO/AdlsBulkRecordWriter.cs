@@ -234,7 +234,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 Dictionary<string, string> blobUploadProperties = new Dictionary<string, string>()
                 {
                     { "BlobPath", filePath },
-                    { "Success", true.ToString() }
+                    { "Success", true.ToString() },
+                    { "OutputFileName", fileName },
+                    { "LocalRoot", this.localRoot },
+                    { "AdlsRoot", adlsDirectory },
                 };
                 this.TelemetryClient.TrackEvent("BlobUpload", blobUploadProperties);
             }
