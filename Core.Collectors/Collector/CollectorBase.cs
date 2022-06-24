@@ -119,7 +119,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     foreach (JObject record in records)
                     {
                         haltCollection = haltCollection || collectionNode.HaltCollection(record);
-                        await this.ProcessRecordAsync(collectionNode, batchingHttpRequest, haltCollection, record).ConfigureAwait(false);
+                        await this.ProcessRecordAsync(collectionNode, batchingHttpRequest, haltCollection, record, serializedResponse.Response).ConfigureAwait(false);
                     }
 
                     // recurse to children node of the response
@@ -217,7 +217,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             return true;
         }
 
-        private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record)
+        private async Task ProcessRecordAsync(T collectionNode, IBatchingHttpRequest batchingHttpRequest, bool haltCollection, JObject record, JObject response)
         {
             bool lastBatch = !batchingHttpRequest.HasNext || haltCollection;
             string identityForLogging = batchingHttpRequest.PreviousIdentity;
@@ -260,9 +260,10 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
             }
 
             // Process the record and output additional records created during processing.
-            List<RecordWithContext> additionalRecordsWithContext = await collectionNode.ProcessRecordAsync(record).ConfigureAwait(false);
+            List<RecordWithContext> additionalRecordsWithContext1 = await collectionNode.ProcessRecordAsync(record).ConfigureAwait(false);
+            List<RecordWithContext> additionalRecordsWithContext2 = await collectionNode.ProcessRecordWithResponseAsync(response, record).ConfigureAwait(false);
             // We output additional records regardless "Output" is true or false. This permits us to discard the original response but transform into something different.
-            foreach (RecordWithContext recordWithContext in additionalRecordsWithContext)
+            foreach (RecordWithContext recordWithContext in additionalRecordsWithContext1.Concat(additionalRecordsWithContext2))
             {
                 // For each additional record, augment their record context's additional metadata with the parent's record context's additional metadata.
                 RecordContext additionalRecordContext = recordWithContext.Context;
