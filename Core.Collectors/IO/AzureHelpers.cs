@@ -162,7 +162,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             }
         }
 
-        public static async Task<CloudQueue> GetStorageQueueUsingMsiAsync(string queueName, string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient)
+        public static async Task<CloudQueue> GetStorageQueueUsingMsiAsync(string queueName, string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient = null)
         {
             CloudStorageAccount storageAccount = await GetStorageAccountUsingMsiAsync(storageAccountNameEnvironmentVariable, telemetryClient, isQueue: true).ConfigureAwait(false);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
@@ -282,7 +282,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return CloudStorageAccount.Parse(stagingBlobConnectionString);
         }
 
-        public static async Task<CloudStorageAccount> GetStorageAccountUsingMsiAsync(string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient, bool isQueue = false)
+        public static async Task<CloudStorageAccount> GetStorageAccountUsingMsiAsync(string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient = null, bool isQueue = false)
         {
             string storageAccountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
             string resource = isQueue ? GetQueueResource(storageAccountName) : GetBlobResource(storageAccountName);
@@ -291,7 +291,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return storageAccount;
         }
 
-        private static async Task<StorageCredentials> GetStorageCredentails(string resource, ITelemetryClient telemetryClient)
+        private static async Task<StorageCredentials> GetStorageCredentails(string resource, ITelemetryClient telemetryClient = null)
         {
             AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
             string token = await azureServiceTokenProvider.GetAccessTokenAsync(resource).ConfigureAwait(false);
