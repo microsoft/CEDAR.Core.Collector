@@ -24,7 +24,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private static Dictionary<string, CachedCloudQueue> CloudQueues = new Dictionary<string, CachedCloudQueue>();
         private static readonly System.Threading.SemaphoreSlim CloudResourceLock = new System.Threading.SemaphoreSlim(1, 1);
         private static readonly string EndPointSuffix = "core.windows.net";
-        private static DateTime TokenExpiration = DateTime.MinValue;
+        public static DateTime TokenExpiration = DateTime.MinValue;
 
         public class CachedCloudQueue
         {
