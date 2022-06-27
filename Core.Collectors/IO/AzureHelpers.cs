@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -24,9 +24,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private static Dictionary<string, CachedCloudQueue> CloudQueues = new Dictionary<string, CachedCloudQueue>();
         private static readonly System.Threading.SemaphoreSlim CloudResourceLock = new System.Threading.SemaphoreSlim(1, 1);
         private static readonly string EndPointSuffix = "core.windows.net";
-        private TelemetryClient telemetryClient;
+        private DateTime tokenExpiration;
+        private ITelemetryClient telemetryClient;
 
-        public AzureHelpers(TelemetryClient telemetryClient)
+        public AzureHelpers(ITelemetryClient telemetryClient)
         {
             this.telemetryClient = telemetryClient;
         }
@@ -301,11 +302,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
             string token = await azureServiceTokenProvider.GetAccessTokenAsync(resource).ConfigureAwait(false);
             var jwt = new JwtSecurityToken(token);
-            DateTime expirationTime = jwt.ValidTo;
+            this.tokenExpiration = jwt.ValidTo;
             Dictionary<string, string> properties = new Dictionary<string, string>()
             {
                 { "Resource", resource },
-                { "TokenValidTo", expirationTime.ToString()}
+                { "TokenValidTo", tokenExpiration.ToString()}
             };
             this.telemetryClient.TrackEvent("MsiTokenGeneration", properties);
             TokenCredential tokenCredential = new TokenCredential(token);
@@ -320,6 +321,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static string GetQueueResource(string storageAccountName)
         {
             return $"https://{storageAccountName}.queue.core.windows.net/";
+        }
+
+        public DateTime GetTokenExpiration()
+        {
+            return tokenExpiration;
         }
     }
 }
