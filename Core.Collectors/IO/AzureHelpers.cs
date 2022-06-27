@@ -300,7 +300,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             Dictionary<string, string> properties = new Dictionary<string, string>()
             {
                 { "Resource", resource },
-                { "TokenValidTo", tokenExpiration.ToString()}
+                { "TokenValidTo", TokenExpiration.ToString()}
             };
             telemetryClient?.TrackEvent("MsiTokenGeneration", properties);
             TokenCredential tokenCredential = new TokenCredential(token);
