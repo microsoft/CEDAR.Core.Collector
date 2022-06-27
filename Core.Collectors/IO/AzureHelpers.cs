@@ -24,7 +24,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         private static Dictionary<string, CachedCloudQueue> CloudQueues = new Dictionary<string, CachedCloudQueue>();
         private static readonly System.Threading.SemaphoreSlim CloudResourceLock = new System.Threading.SemaphoreSlim(1, 1);
         private static readonly string EndPointSuffix = "core.windows.net";
-        private static DateTime tokenExpiration;
+        private static DateTime TokenExpiration;
 
         public class CachedCloudQueue
         {
@@ -296,7 +296,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
             string token = await azureServiceTokenProvider.GetAccessTokenAsync(resource).ConfigureAwait(false);
             var jwt = new JwtSecurityToken(token);
-            tokenExpiration = jwt.ValidTo;
+            TokenExpiration = jwt.ValidTo;
             Dictionary<string, string> properties = new Dictionary<string, string>()
             {
                 { "Resource", resource },
