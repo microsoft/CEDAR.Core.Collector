@@ -302,7 +302,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                 { "Resource", resource },
                 { "TokenValidTo", tokenExpiration.ToString()}
             };
-            telemetryClient.TrackEvent("MsiTokenGeneration", properties);
+            telemetryClient?.TrackEvent("MsiTokenGeneration", properties);
             TokenCredential tokenCredential = new TokenCredential(token);
             return new StorageCredentials(tokenCredential);
         }
@@ -315,11 +315,6 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static string GetQueueResource(string storageAccountName)
         {
             return $"https://{storageAccountName}.queue.core.windows.net/";
-        }
-
-        public static DateTime GetTokenExpiration()
-        {
-            return tokenExpiration;
         }
     }
 }
