@@ -11,9 +11,13 @@ trigger:
 
 pool:
   name: 'CloudMine'
-  vmImage: 'MerlinBotDefaultNetCore'
+  demands:
+    - ImageOverride -equals CloudMineDefault
 
 steps:
+
+- checkout: self
+  path: s\Core.Collectors
 
 - checkout: git://Domino/CloudMine@master
   path: s\CloudMine
