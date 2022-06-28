@@ -15,9 +15,6 @@ pool:
 
 steps:
 
-- checkout: self
-  path: s\Core.Collectors
-
 - checkout: git://Domino/CloudMine@master
   path: s\CloudMine
 
