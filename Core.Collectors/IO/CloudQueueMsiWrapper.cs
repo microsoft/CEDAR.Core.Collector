@@ -57,13 +57,13 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             // Tokens acquired via the App Authentication library currently are refreshed when less than 5 minutes remains until they expire. So it caches the token for 23 hours 55 minutes in memory.
             if (this.msiTokenExpiration - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
             {
-                this.queue = await AzureHelpers.GetStorageQueueUsingMsiAsync(queueName, storageAccountNameEnvironmentVariable, telemetryClient).ConfigureAwait(false);
+                this.queue = await AzureHelpers.GetStorageQueueUsingMsiAsync(queueName, this.storageAccountNameEnvironmentVariable, this.telemetryClient).ConfigureAwait(false);
                 this.msiTokenExpiration = AzureHelpers.TokenExpiration;
                 Dictionary<string, string> properties = new Dictionary<string, string>()
-                    {
-                        { "MsiTokenExpirationTime", this.msiTokenExpiration.ToString() },
-                        { "Queue", queueName },
-                    };
+                {
+                    { "MsiTokenExpirationTime", this.msiTokenExpiration.ToString() },
+                    { "Queue", queueName },
+                };
                 telemetryClient.TrackEvent("GCRefreshedMsiToken", properties);
             }
             return this.queue;
