@@ -11,7 +11,8 @@ trigger:
 
 pool:
   name: 'CloudMine'
-  vmImage: 'MerlinBotDefaultNetCore'
+  demands:
+    - ImageOverride -equals CloudMineDefault
 
 steps:
 
