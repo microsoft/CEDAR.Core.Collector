@@ -64,7 +64,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     { "MsiTokenExpirationTime", this.msiTokenExpiration.ToString() },
                     { "Queue", queueName },
                 };
-                telemetryClient.TrackEvent("GCRefreshedMsiToken", properties);
+                telemetryClient.TrackEvent("RefreshedMsiToken", properties);
             }
             return this.queue;
         }
