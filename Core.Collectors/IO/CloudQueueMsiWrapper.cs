@@ -13,16 +13,15 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 {
     public class CloudQueueMsiWrapper : IQueue
     {
-        private CloudQueue queue;
         private readonly string queueName;
         private readonly string storageAccountNameEnvironmentVariable;
         private readonly ITelemetryClient telemetryClient;
+        private CloudQueue queue;
         private DateTime msiTokenExpiration = DateTime.MinValue;
 
-        public CloudQueueMsiWrapper(CloudQueue queue, string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient)
+        public CloudQueueMsiWrapper(string queueName, string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient)
         {
-            this.queue = queue;
-            this.queueName = queue.Name;
+            this.queueName = queueName;
             this.storageAccountNameEnvironmentVariable = storageAccountNameEnvironmentVariable;
             this.telemetryClient = telemetryClient;
         }
@@ -53,11 +52,10 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private async Task<CloudQueue> GetValidMsiStorageQueueAsync()
         {
-            string queueName = this.queue.Name;
             // Tokens acquired via the App Authentication library currently are refreshed when less than 5 minutes remains until they expire. So it caches the token for 23 hours 55 minutes in memory.
             if (this.msiTokenExpiration - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
             {
-                this.queue = await AzureHelpers.GetStorageQueueUsingMsiAsync(queueName, this.storageAccountNameEnvironmentVariable, this.telemetryClient).ConfigureAwait(false);
+                CloudQueue cloudQueue = await AzureHelpers.GetStorageQueueUsingMsiAsync(this.queueName, this.storageAccountNameEnvironmentVariable, this.telemetryClient).ConfigureAwait(false);
                 this.msiTokenExpiration = AzureHelpers.TokenExpiration;
                 Dictionary<string, string> properties = new Dictionary<string, string>()
                 {
@@ -65,6 +63,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     { "Queue", queueName },
                 };
                 telemetryClient.TrackEvent("RefreshedMsiToken", properties);
+                this.queue = cloudQueue;
             }
             return this.queue;
         }
