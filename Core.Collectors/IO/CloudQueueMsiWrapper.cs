@@ -50,7 +50,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return this.PutMessageAsync(message, timeToLive);
         }
 
-        private async Task<CloudQueue> GetValidMsiStorageQueueAsync()
+        public async Task<CloudQueue> GetValidMsiStorageQueueAsync()
         {
             // Tokens acquired via the App Authentication library currently are refreshed when less than 5 minutes remains until they expire. So it caches the token for 23 hours 55 minutes in memory.
             if (this.msiTokenExpiration - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
