@@ -85,11 +85,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
+            string rateLimitResource = GetRateLimitResource(responseHeaders);
             rateLimitRemaining = rateLimitRemaining == long.MinValue ? existingRecord.RateLimitRemaining : rateLimitRemaining;
             rateLimitLimit = rateLimitLimit == long.MinValue ? existingRecord.RateLimitLimit : rateLimitLimit;
             rateLimitResetDate = rateLimitResetDate == null ? existingRecord.RateLimitReset : rateLimitResetDate;
 
-            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource);
             await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
             this.cacheDateUtc = DateTime.UtcNow;
         }
