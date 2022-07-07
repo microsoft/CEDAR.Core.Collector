@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System;
@@ -16,6 +16,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         public long RateLimitRemaining { get; set; }
         public DateTime? RateLimitReset { get; set; }
         public DateTime? RetryAfter { get; set; }
+        public string Resource { get; set; }
 
         // Used for serialization.
         public RateLimitTableEntity()
@@ -24,11 +25,17 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
 
         // Used only to retrieve (lookup) entries.
         public RateLimitTableEntity(string identity, string organizationId, string organizationName)
-            : this(identity, organizationId, organizationName, rateLimitLimit: long.MinValue, rateLimitRemaining: long.MinValue, rateLimitReset: null, retryAfter: null)
+            : this(identity, organizationId, organizationName, rateLimitLimit: long.MinValue, rateLimitRemaining: long.MinValue, rateLimitReset: null, retryAfter: null, resource: null)
         {
         }
 
+        // Used for backwards-compatibility purposes.
         public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter)
+            : this(identity, organizationId, organizationName, rateLimitLimit, rateLimitRemaining, rateLimitReset, retryAfter, resource: null)
+        {
+        }
+
+        public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter, string resource)
         {
             this.PartitionKey = identity;
             this.RowKey = organizationId;
@@ -40,6 +47,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.RateLimitRemaining = rateLimitRemaining;
             this.RateLimitReset = rateLimitReset;
             this.RetryAfter = retryAfter;
+            this.Resource = resource;
 
             this.AddContext("Identity", this.Identity);
             this.AddContext("OrganizationIdString", this.OrganizationIdString);
@@ -48,6 +56,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.AddContext("RateLimitRemaining", this.RateLimitRemaining.ToString());
             this.AddContext("RateLimitReset", $"{this.RateLimitReset:O}");
             this.AddContext("RetryAfter", $"{this.RetryAfter:O}");
+            this.AddContext("Resource", this.Resource);
         }
     }
 }
