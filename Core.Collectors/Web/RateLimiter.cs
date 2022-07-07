@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
@@ -29,6 +29,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         private TimeSpan cacheInvalidationFrequency;
         private RateLimitTableEntity cachedResult;
         private DateTime cacheDateUtc;
+
+        public const string RateLimitGlobalResource = "*";
 
         static RateLimiter()
         {
@@ -120,10 +122,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 rateLimitResetDate = Epoch.AddSeconds(rateLimitReset);
             }
 
+            string rateLimitResource = GetRateLimitResource(responseHeaders);
+
             if (rateLimitLimit == long.MinValue || rateLimitRemaining == long.MinValue || rateLimitResetDate == DateTime.MinValue)
             {
                 // The response does not include the required headers to update rate limiter stats. Potentially log this in telemetry and return.
-                if (expectRateLimitingHeaders)
+                if (this.expectRateLimitingHeaders)
                 {
                     string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Dictionary<string, string> properties = new Dictionary<string, string>()
@@ -143,7 +147,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate)).ConfigureAwait(false);
+            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource)).ConfigureAwait(false);
         }
 
         public static long GetRetryAfter(HttpResponseHeaders responseHeaders)
@@ -157,6 +161,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             if (responseHeaders.TryGetValues(header, out IEnumerable<string> resultValues))
             {
                 result = long.Parse(resultValues.First());
+            }
+            return result;
+        }
+
+        public static string GetRateLimitResource(HttpResponseHeaders responseHeaders)
+        {
+            string result = RateLimitGlobalResource;
+            if (responseHeaders.TryGetValues("X-RateLimit-Resource", out IEnumerable<string> resultValues))
+            {
+                result = resultValues.First();
             }
             return result;
         }
