@@ -29,6 +29,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         {
         }
 
+        // Used for backwards-compatibility purposes.
+        public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter)
+            : this(identity, organizationId, organizationName, rateLimitLimit, rateLimitRemaining, rateLimitReset, retryAfter, resource: null)
+        {
+        }
+
         public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter, string resource)
         {
             this.PartitionKey = identity;
