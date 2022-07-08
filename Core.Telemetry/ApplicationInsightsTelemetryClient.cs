@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.ApplicationInsights;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 
 namespace Microsoft.CloudMine.Core.Telemetry
@@ -103,10 +104,15 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
         public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
         {
-            this.TrackRequest(identity, apiName, requestUrl, requestBody: string.Empty, eTag, duration, responseMessage);
+            this.TrackRequest(identity, apiName, requestUrl, requestBody: string.Empty, eTag, duration, responseMessage, properties: null);
         }
 
-        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
+        public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
+        {
+            this.TrackRequest(identity, apiName, requestUrl, requestBody: string.Empty, eTag, duration, responseMessage, properties);
+        }
+
+        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
         {
             DependencyTelemetry dependencyTelemetry = new DependencyTelemetry()
             {
@@ -128,7 +134,8 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
 
             dependencyTelemetry.Properties.Add("Identity", identityToTrack);
-            foreach (KeyValuePair<string, string> property in this.GetContextProperties())
+            IEnumerable<KeyValuePair<string, string>> allProperties = properties == null ? this.GetContextProperties() : this.GetContextProperties().Concat(properties);
+            foreach (KeyValuePair<string, string> property in allProperties)
             {
                 dependencyTelemetry.Properties.Add(property.Key, property.Value);
             }
