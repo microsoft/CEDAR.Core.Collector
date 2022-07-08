@@ -1,9 +1,10 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 
 namespace Microsoft.CloudMine.Core.Telemetry
@@ -124,17 +125,16 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
         }
 
-        public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
+        public virtual void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
         {
-            this.TrackRequest(identity, apiName, requestUrl, requestBody: string.Empty, eTag, duration, responseMessage);
+            this.TrackRequest(identity, apiName, requestUrl, requestBody: string.Empty, eTag, duration, responseMessage, properties);
         }
 
-        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
+        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
         {
             using Activity trace = OpenTelemetryTracer.GetActivity("Request").Start();
 
-            Dictionary<string, string> properties = this.GetContextProperties();
-
+            IEnumerable<KeyValuePair<string, string>> allProperties = properties == null ? this.GetContextProperties() : this.GetContextProperties().Concat(properties);
             foreach (string key in properties.Keys)
             {
                 trace.AddTag(key, properties[key]);
