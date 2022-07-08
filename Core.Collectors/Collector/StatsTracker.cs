@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.IO;
@@ -93,7 +93,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("RecordType", recordType);
-                    OpenTelemetryMetric.RecordCounter.Add(recordCount, tags);
+                    new TelemetryMetric<long>("RecordCounter").Add(recordCount, tags);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());

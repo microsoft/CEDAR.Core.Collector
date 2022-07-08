@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using OpenTelemetry;
 using OpenTelemetry.Exporter.Geneva;
@@ -10,11 +10,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
 {
     public class OpenTelemetryMetric
     {
-        public static readonly TelemetryMetric<long> RecordCounter;
-        public static readonly TelemetryMetric<long> HeartbeatCounter;
-        public static readonly TelemetryMetric<double> RateLimitDelay;
-        public static readonly TelemetryMetric<long> QueueLength;
-
         private const string SUBSCRIPTION_KEY = "Metrics";
 
         public static readonly Meter OpenTelemetryMeter;
@@ -24,10 +19,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
         {
             OpenTelemetryMeter = new Meter(SUBSCRIPTION_KEY, "1.0");
             MeterProvider = BuildMeterProvider();
-            RecordCounter = new TelemetryMetric<long>("RecordCounter");
-            HeartbeatCounter = new TelemetryMetric<long>("HeartbeatCounter");
-            RateLimitDelay = new TelemetryMetric<double>("RateLimitDelay");
-            QueueLength = new TelemetryMetric<long>("QueueLength");
         }
 
         public static void Dispose()
