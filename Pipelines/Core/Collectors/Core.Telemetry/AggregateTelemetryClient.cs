@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
@@ -54,19 +54,19 @@ namespace Microsoft.CloudMine.Core.Telemetry
             }
         }
 
-        public void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
+        public void TrackRequest(string identity, string apiName, string requestUrl, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
         {
             foreach (ITelemetryClient telemetryClient in this.telemetryClients)
             {
-                telemetryClient.TrackRequest(identity, apiName, requestUrl, eTag, duration, responseMessage);
+                telemetryClient.TrackRequest(identity, apiName, requestUrl, eTag, duration, responseMessage, properties);
             }
         }
 
-        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage)
+        public void TrackRequest(string identity, string apiName, string requestUrl, string requestBody, string eTag, TimeSpan duration, HttpResponseMessage responseMessage, IDictionary<string, string> properties = null)
         {
             foreach (ITelemetryClient telemetryClient in this.telemetryClients)
             {
-                telemetryClient.TrackRequest(identity, apiName, requestUrl, requestBody, eTag, duration, responseMessage);
+                telemetryClient.TrackRequest(identity, apiName, requestUrl, requestBody, eTag, duration, responseMessage, properties);
             }
         }
     }
