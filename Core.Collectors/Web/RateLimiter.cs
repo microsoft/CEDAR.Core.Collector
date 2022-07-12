@@ -90,16 +90,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             rateLimitLimit = rateLimitLimit == long.MinValue ? existingRecord.RateLimitLimit : rateLimitLimit;
             rateLimitResetDate = rateLimitResetDate == null ? existingRecord.RateLimitReset : rateLimitResetDate;
 
-            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
             await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
             this.cacheDateUtc = DateTime.UtcNow;
         }
 
         public async Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response)
         {
-            if (!(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotModified))
+            if (!(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotModified || response.StatusCode == HttpStatusCode.TooManyRequests))
             {
-                // Don't attempt to extract out rate-limiting details for unsuccessful requests. Some (e.g., 404 might have it) but some (e.g., 502) does not have it.
+                // Don't attempt to extract out rate-limiting details for unsuccessful requests except 429s. Some (e.g., 404 might have it) but some (e.g., 502) does not have it.
                 // These responses also should be very little compared to others, so we won't lose much.
                 return;
             }
@@ -148,7 +148,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource)).ConfigureAwait(false);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
+            await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
+            this.cacheDateUtc = DateTime.UtcNow;
         }
 
         public static long GetRetryAfter(HttpResponseHeaders responseHeaders)
