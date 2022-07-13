@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
@@ -58,7 +58,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
         public async Task<bool> ProcessAsync(T collectionNode, long maxPageCount)
         {
-            using Activity trace = OpenTelemetryTracer.GetActivity(OpenTelemetryTrace.ProccessCollectionNode).Start();
+            using Activity trace = OpenTelemetryTracer.GetActivity("CollectionNode").Start();
             trace.AddTag("ApiName", collectionNode.ApiName);
             trace.AddTag("RecordType", collectionNode.RecordType);
 
