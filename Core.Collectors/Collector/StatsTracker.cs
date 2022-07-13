@@ -39,7 +39,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     /// </summary>
     public class StatsTracker
     {
-
         private static readonly TelemetryMetric<long> RecordCounterMetric = new TelemetryMetric<long>("RecordCounter");
 
         private readonly ITelemetryClient telemetryClient;
