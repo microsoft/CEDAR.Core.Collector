@@ -16,9 +16,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     /// such as the number of successful and failing web reqeusts, and the amount of data that is collected (per record type).
     /// When run in "Release" mode, the StatsTracker logs the data to the associated AI instance as a custom event. When run in "Debug" mode (e.g., locally), StatsTracker also prints
     /// this information on the console as long as the TelemetryClient is associated with the ILogger at the beginning of the function execution.
-    /// 
+    ///
     /// You can adopt the following pattern to use the StatsTracker:
-    /// 
+    ///
     /// StatsTracker statsTracker = null;
     /// try
     /// {
@@ -39,6 +39,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
     /// </summary>
     public class StatsTracker
     {
+
+        private static readonly TelemetryMetric<long> RecordCounterMetric = new TelemetryMetric<long>("RecordCounter");
+
         private readonly ITelemetryClient telemetryClient;
         private readonly IWebRequestStatsTracker webRequestStatsTracker;
         private readonly IRecordStatsTracker recordStatsTracker;
@@ -93,7 +96,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 
                     TagList tags = new TagList();
                     tags.Add("RecordType", recordType);
-                    new TelemetryMetric<long>("RecordCounter").Add(recordCount, tags);
+                    RecordCounterMetric.Add(recordCount, tags);
                 }
 
                 properties.Add("TotalRecordCount", totalRecordCount.ToString());
