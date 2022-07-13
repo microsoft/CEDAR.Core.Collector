@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using OpenTelemetry;
 using OpenTelemetry.Exporter.Geneva;
@@ -12,11 +12,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
         private const string SUBSCRIPTION_KEY = "Traces";
         private static readonly TracerProvider TracerProvider = BuildTracerProvider();
         private static readonly ActivitySource ActivitySource = new ActivitySource(SUBSCRIPTION_KEY);
-
-        public static Activity GetActivity(OpenTelemetryTrace trace)
-        {
-            return ActivitySource.CreateActivity(trace.Name, ActivityKind.Internal).AddDefaultTags();
-        }
 
         public static Activity GetActivity(string name)
         {
