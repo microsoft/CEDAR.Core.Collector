@@ -3,6 +3,7 @@
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Cache;
+using Microsoft.CloudMine.Core.Collectors.Utility;
 using Microsoft.CloudMine.Core.Telemetry;
 using System;
 using System.Collections.Generic;
@@ -25,8 +26,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         protected string OrganizationId { get; private set; }
         protected string OrganizationName { get; private set; }
+        protected IDateTimeSystem DateTimeSystem { get; private set; }
 
-        private TimeSpan cacheInvalidationFrequency;
+        private readonly TimeSpan cacheInvalidationFrequency;
         private RateLimitTableEntity cachedResult;
         private DateTime cacheDateUtc;
 
@@ -43,8 +45,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                            ICache<RateLimitTableEntity> rateLimiterCache,
                            ITelemetryClient telemetryClient,
                            bool expectRateLimitingHeaders,
-                           TimeSpan cacheInvalidationFrequency)
+                           TimeSpan cacheInvalidationFrequency,
+                           IDateTimeSystem dateTimeSystem = null)
         {
+            this.DateTimeSystem = dateTimeSystem ?? new DateTimeWrapper();
+
             this.OrganizationId = organizationId;
             this.OrganizationName = organizationName;
             this.rateLimiterCache = rateLimiterCache;
@@ -66,7 +71,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             DateTime? retryAfterDate = null;
             if (retryAfter != long.MinValue)
             {
-                retryAfterDate = DateTime.UtcNow.AddSeconds(retryAfter);
+                retryAfterDate = this.DateTimeSystem.UtcNow.AddSeconds(retryAfter);
             }
 
             long rateLimitReset = GetRateLimitHeaderValue(responseHeaders, "X-RateLimit-Reset");
@@ -90,16 +95,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             rateLimitLimit = rateLimitLimit == long.MinValue ? existingRecord.RateLimitLimit : rateLimitLimit;
             rateLimitResetDate = rateLimitResetDate == null ? existingRecord.RateLimitReset : rateLimitResetDate;
 
-            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
             await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
-            this.cacheDateUtc = DateTime.UtcNow;
+            this.cacheDateUtc = this.DateTimeSystem.UtcNow;
         }
 
         public async Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response)
         {
-            if (!(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotModified))
+            if (!(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotModified || response.StatusCode == HttpStatusCode.TooManyRequests))
             {
-                // Don't attempt to extract out rate-limiting details for unsuccessful requests. Some (e.g., 404 might have it) but some (e.g., 502) does not have it.
+                // Don't attempt to extract out rate-limiting details for unsuccessful requests except 429s. Some (e.g., 404 might have it) but some (e.g., 502) does not have it.
                 // These responses also should be very little compared to others, so we won't lose much.
                 return;
             }
@@ -113,7 +118,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             DateTime? retryAfterDate = null;
             if (retryAfter != long.MinValue)
             {
-                retryAfterDate = DateTime.UtcNow.AddSeconds(retryAfter);
+                retryAfterDate = this.DateTimeSystem.UtcNow.AddSeconds(retryAfter);
             }
 
             long rateLimitReset = GetRateLimitHeaderValue(responseHeaders, "X-RateLimit-Reset");
@@ -148,7 +153,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            await this.rateLimiterCache.CacheAsync(new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource)).ConfigureAwait(false);
+            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
+            await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
+            this.cacheDateUtc = this.DateTimeSystem.UtcNow;
         }
 
         public static long GetRetryAfter(HttpResponseHeaders responseHeaders)
@@ -178,11 +185,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public async Task WaitIfNeededAsync(IAuthentication authentication)
         {
-            TimeSpan elapsedSinceLastLookup = DateTime.UtcNow - this.cacheDateUtc;
+            TimeSpan elapsedSinceLastLookup = this.DateTimeSystem.UtcNow - this.cacheDateUtc;
             if (this.cachedResult == null || elapsedSinceLastLookup >= this.cacheInvalidationFrequency)
             {
                 this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
-                this.cacheDateUtc = DateTime.UtcNow;
+                this.cacheDateUtc = this.DateTimeSystem.UtcNow;
             }
 
             if (this.cachedResult == null)
