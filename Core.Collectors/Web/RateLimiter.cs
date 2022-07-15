@@ -183,12 +183,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             return result;
         }
 
-        public async Task WaitIfNeededAsync(IAuthentication authentication)
+        public async Task WaitIfNeededAsync(IAuthentication authentication, string resource = null)
         {
             TimeSpan elapsedSinceLastLookup = this.DateTimeSystem.UtcNow - this.cacheDateUtc;
             if (this.cachedResult == null || elapsedSinceLastLookup >= this.cacheInvalidationFrequency)
             {
-                this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName)).ConfigureAwait(false);
+                this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName, resource)).ConfigureAwait(false);
                 this.cacheDateUtc = this.DateTimeSystem.UtcNow;
             }
 

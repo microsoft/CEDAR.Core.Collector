@@ -31,6 +31,12 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         {
         }
 
+        // Used only to retrieve (lookup) entries.
+        public RateLimitTableEntity(string identity, string organizationId, string organizationName, string resource)
+            : this(identity, organizationId, organizationName, rateLimitLimit: long.MinValue, rateLimitRemaining: long.MinValue, rateLimitReset: null, retryAfter: null, resource, statusCode: HttpStatusCode.OK.ToString())
+        {
+        }
+
         // Used for backwards-compatibility purposes.
         public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter)
             : this(identity, organizationId, organizationName, rateLimitLimit, rateLimitRemaining, rateLimitReset, retryAfter, resource: null, statusCode: HttpStatusCode.OK.ToString())
@@ -40,7 +46,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         public RateLimitTableEntity(string identity, string organizationId, string organizationName, long rateLimitLimit, long rateLimitRemaining, DateTime? rateLimitReset, DateTime? retryAfter, string resource, string statusCode)
         {
             this.PartitionKey = identity;
-            this.RowKey = organizationId;
+            this.RowKey = GetRowKey(organizationId, resource);
 
             this.Identity = identity;
             this.OrganizationIdString = organizationId;
@@ -61,6 +67,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.AddContext("RetryAfter", $"{this.RetryAfter:O}");
             this.AddContext("Resource", this.Resource);
             this.AddContext("StatusCode", this.StatusCode);
+        }
+
+        public static string GetRowKey(string organizationId, string resource)
+        {
+            return string.IsNullOrWhiteSpace(resource) ? organizationId : $"{organizationId}_{resource}";
         }
     }
 }

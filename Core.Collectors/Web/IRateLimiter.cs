@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
@@ -11,6 +11,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
     {
         Task UpdateRetryAfterAsync(string identity, string requestUrl, HttpResponseMessage response);
         Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response);
-        Task WaitIfNeededAsync(IAuthentication authentication);
+        Task WaitIfNeededAsync(IAuthentication authentication, string resource = null);
     }
 }
