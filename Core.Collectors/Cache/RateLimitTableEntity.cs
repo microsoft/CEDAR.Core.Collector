@@ -71,7 +71,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
 
         public static string GetRowKey(string organizationId, string resource)
         {
-            return string.IsNullOrWhiteSpace(resource) ? organizationId : $"{organizationId}_{resource}";
+            return string.IsNullOrWhiteSpace(resource) ? organizationId : $"{organizationId}_{NormalizeResource(resource)}";
+        }
+
+        private static object NormalizeResource(string resource)
+        {
+            // Azure table does not permit to use "/" in partition and row keys, so replace that with "_".
+            return resource.Replace("/", "_");
         }
     }
 }
