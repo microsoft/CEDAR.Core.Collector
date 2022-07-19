@@ -186,20 +186,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             RateLimitTableEntity record = null;
 
             string rowKey = RateLimitTableEntity.GetRowKey(this.OrganizationId, resource);
-            bool lookup = false;
+            bool lookup = true;
             if (this.cachedResultMap.TryGetValue(RateLimitTableEntity.GetRowKey(this.OrganizationId, resource), out Tuple<RateLimitTableEntity, DateTime> recordWithDate))
             {
                 DateTime cacheDateUtc = recordWithDate.Item2;
                 TimeSpan elapsedSinceLastLookup = this.DateTimeSystem.UtcNow - cacheDateUtc;
                 record = recordWithDate.Item1;
-                if (!record.RowKey.Equals(rowKey) || elapsedSinceLastLookup >= this.cacheInvalidationFrequency)
-                {
-                    lookup = true;
-                }
-            }
-            else
-            {
-                lookup = true;
+                lookup = elapsedSinceLastLookup >= this.cacheInvalidationFrequency;
             }
 
             if (lookup)
