@@ -29,8 +29,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         protected IDateTimeSystem DateTimeSystem { get; private set; }
 
         private readonly TimeSpan cacheInvalidationFrequency;
-        private RateLimitTableEntity cachedResult;
-        private DateTime cacheDateUtc;
+        private Dictionary<string, Tuple<RateLimitTableEntity, DateTime>> cachedResultMap;
 
         public const string RateLimitGlobalResource = "*";
 
@@ -57,8 +56,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             this.expectRateLimitingHeaders = expectRateLimitingHeaders;
             this.cacheInvalidationFrequency = cacheInvalidationFrequency;
 
-            this.cachedResult = null;
-            this.cacheDateUtc = DateTime.MinValue;
+            this.cachedResultMap = new Dictionary<string, Tuple<RateLimitTableEntity, DateTime>>();
         }
 
         public async Task UpdateRetryAfterAsync(string identity, string requestUrl, HttpResponseMessage response)
@@ -95,9 +93,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
             rateLimitLimit = rateLimitLimit == long.MinValue ? existingRecord.RateLimitLimit : rateLimitLimit;
             rateLimitResetDate = rateLimitResetDate == null ? existingRecord.RateLimitReset : rateLimitResetDate;
 
-            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
-            await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
-            this.cacheDateUtc = this.DateTimeSystem.UtcNow;
+            RateLimitTableEntity record = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
+            await this.rateLimiterCache.CacheAsync(record).ConfigureAwait(false);
+            this.cachedResultMap[RateLimitTableEntity.GetRowKey(this.OrganizationId, rateLimitResource)] = Tuple.Create(record, this.DateTimeSystem.UtcNow);
         }
 
         public async Task UpdateStatsAsync(string identity, string requestUrl, HttpResponseMessage response)
@@ -153,9 +151,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
                 return;
             }
 
-            this.cachedResult = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
-            await this.rateLimiterCache.CacheAsync(this.cachedResult).ConfigureAwait(false);
-            this.cacheDateUtc = this.DateTimeSystem.UtcNow;
+            RateLimitTableEntity record = new RateLimitTableEntity(identity, this.OrganizationId, this.OrganizationName, rateLimitLimit, rateLimitRemaining, rateLimitResetDate, retryAfterDate, rateLimitResource, response.StatusCode.ToString());
+            await this.rateLimiterCache.CacheAsync(record).ConfigureAwait(false);
+            this.cachedResultMap[RateLimitTableEntity.GetRowKey(this.OrganizationId, rateLimitResource)] = Tuple.Create(record, this.DateTimeSystem.UtcNow);
         }
 
         public static long GetRetryAfter(HttpResponseHeaders responseHeaders)
@@ -185,19 +183,30 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
 
         public async Task WaitIfNeededAsync(IAuthentication authentication, string resource = null)
         {
-            TimeSpan elapsedSinceLastLookup = this.DateTimeSystem.UtcNow - this.cacheDateUtc;
-            if (this.cachedResult == null || elapsedSinceLastLookup >= this.cacheInvalidationFrequency)
+            RateLimitTableEntity record = null;
+
+            string rowKey = RateLimitTableEntity.GetRowKey(this.OrganizationId, resource);
+            bool lookup = true;
+            if (this.cachedResultMap.TryGetValue(RateLimitTableEntity.GetRowKey(this.OrganizationId, resource), out Tuple<RateLimitTableEntity, DateTime> recordWithDate))
             {
-                this.cachedResult = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName, resource)).ConfigureAwait(false);
-                this.cacheDateUtc = this.DateTimeSystem.UtcNow;
+                DateTime cacheDateUtc = recordWithDate.Item2;
+                TimeSpan elapsedSinceLastLookup = this.DateTimeSystem.UtcNow - cacheDateUtc;
+                record = recordWithDate.Item1;
+                lookup = elapsedSinceLastLookup >= this.cacheInvalidationFrequency;
             }
 
-            if (this.cachedResult == null)
+            if (lookup)
+            {
+                record = await this.rateLimiterCache.RetrieveAsync(new RateLimitTableEntity(authentication.Identity, this.OrganizationId, this.OrganizationName, resource)).ConfigureAwait(false);
+                this.cachedResultMap[rowKey] = Tuple.Create(record, this.DateTimeSystem.UtcNow);
+            }
+
+            if (record == null)
             {
                 return;
             }
 
-            await WaitIfNeededAsync(authentication, this.cachedResult).ConfigureAwait(false);
+            await WaitIfNeededAsync(authentication, record).ConfigureAwait(false);
         }
 
         protected abstract Task WaitIfNeededAsync(IAuthentication authentication, RateLimitTableEntity tableEntity);
