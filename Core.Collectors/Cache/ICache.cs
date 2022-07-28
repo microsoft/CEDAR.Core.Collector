@@ -1,8 +1,9 @@
-﻿using System.Threading.Tasks;
+using Azure.Data.Tables;
+using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public interface ICache<T> where T : TableEntityWithContext
+    public interface ICache<T> where T : ITableEntity
     {
         Task InitializeAsync();
         Task CacheAsync(T tableEntity);

@@ -1,13 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Data.Tables;
+//using TokenCredentialLegacy = Microsoft.WindowsAzure.Storage.Auth.TokenCredential;
+//using TokenCredential = Azure.Core.TokenCredential;
+using Azure.Identity;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.CloudMine.Core.Telemetry;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
-using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -234,11 +237,21 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return result;
         }
 
-        public static async Task<CloudTable> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        // public static async Task<TableClient> GetStorageTableAsync(string tableName, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
+        // {
+        //     string stagingBlobConnectionString = Environment.GetEnvironmentVariable(storageConnectionEnvironmentVariable);
+        //     TableClient table = new TableClient(stagingBlobConnectionString, tableName);
+
+        //     await table.CreateIfNotExistsAsync().ConfigureAwait(false);
+        //     return table;
+        // }
+
+        public static async Task<TableClient> GetStorageTableUsingMsiAsync(string tableName, string storageAccountNameEnvironmentVariable, ITelemetryClient telemetryClient = null)
         {
-            CloudStorageAccount storageAccount = GetStorageAccount(storageConnectionEnvironmentVariable);
-            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-            CloudTable table = tableClient.GetTableReference(tableName);
+            string storageAccountName = Environment.GetEnvironmentVariable(storageAccountNameEnvironmentVariable);
+            string resource = GetTableResource(storageAccountName);
+
+            TableClient table = new TableClient(new Uri(resource), tableName, new DefaultAzureCredential());
             await table.CreateIfNotExistsAsync().ConfigureAwait(false);
             return table;
         }
@@ -307,6 +320,22 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             return new StorageCredentials(tokenCredential);
         }
 
+        //private static async Task<TokenCredential> GetTokenCredentails(string resource, ITelemetryClient telemetryClient = null)
+        //{
+        //    AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
+        //    string token = await azureServiceTokenProvider.GetAccessTokenAsync(resource).ConfigureAwait(false);
+        //    var jwt = new JwtSecurityToken(token);
+        //    TokenExpiration = jwt.ValidTo;
+        //    Dictionary<string, string> properties = new Dictionary<string, string>()
+        //    {
+        //        { "Resource", resource },
+        //        { "TokenValidTo", TokenExpiration.ToString()}
+        //    };
+        //    telemetryClient?.TrackEvent("MsiTokenGeneration", properties);
+        //    var t = new DefaultAzureCredential(new DefaultAzureCredentialOptions())
+        //    return new TokenCredential(token);
+        //}
+
         public static string GetBlobResource(string storageAccountName)
         {
             return $"https://{storageAccountName}.blob.core.windows.net/";
@@ -315,6 +344,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
         public static string GetQueueResource(string storageAccountName)
         {
             return $"https://{storageAccountName}.queue.core.windows.net/";
+        }
+
+        public static string GetTableResource(string storageAccountName)
+        {
+            return $"https://{storageAccountName}.table.core.windows.net/";
         }
     }
 }
