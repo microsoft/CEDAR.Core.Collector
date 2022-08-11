@@ -14,22 +14,23 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 {
     public class FixedHttpClient : IHttpClient
     {
+        public int RequestCount { get; private set; }
+
         private readonly Dictionary<string, HttpResponseMessage> responseMap;
         private readonly Dictionary<string, Func<Tuple<HttpStatusCode, string>>> requestToResponseGeneratorMap;
-        private int requestCount;
 
         public FixedHttpClient()
         {
             this.responseMap = new Dictionary<string, HttpResponseMessage>();
             this.requestToResponseGeneratorMap = new Dictionary<string, Func<Tuple<HttpStatusCode, string>>>();
-            this.requestCount = 0;
+            this.RequestCount = 0;
         }
 
         public void Reset()
         {
             this.responseMap.Clear();
             this.requestToResponseGeneratorMap.Clear();
-            this.requestCount = 0;
+            this.RequestCount = 0;
         }
 
         public void AddResponseGenerator(string requestUrl, Func<Tuple<HttpStatusCode, string>> resposneGenerator)
@@ -56,7 +57,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
                 Content = new StringContent(responseMessage)
             };
 
-            if (null != responseHeaders)
+            if (responseHeaders != null)
             {
                 foreach (KeyValuePair<string, List<string>> header in responseHeaders)
                 {
@@ -69,7 +70,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
         {
-            this.requestCount++;
+            this.RequestCount++;
 
             if (this.responseMap.TryGetValue(requestUrl, out HttpResponseMessage response))
             {
@@ -116,7 +117,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
-            this.requestCount++;
+            this.RequestCount++;
 
             if (this.responseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage response))
             {
@@ -139,11 +140,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             }
 
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
-        }
-
-        public int GetRequestCount()
-        {
-            return this.requestCount;
         }
     }
 }
