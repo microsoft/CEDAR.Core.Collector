@@ -155,6 +155,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             {
                 responseCopy.Headers.Add(header.Key, header.Value);
             }
+
             return responseCopy;
         }
     }
