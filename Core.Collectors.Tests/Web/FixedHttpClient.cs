@@ -74,7 +74,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
             if (this.responseMap.TryGetValue(requestUrl, out HttpResponseMessage response))
             {
-                return Task.FromResult(response);
+                return CopyHttpResponseMessage(response);
             }
 
             if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
@@ -119,14 +119,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
         {
             this.RequestCount++;
 
-            if (this.responseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage response))
+            if (this.responseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage cachedResponse))
             {
-                return Task.FromResult(response);
+                return CopyHttpResponseMessage(cachedResponse);
             }
 
-            if (this.responseMap.TryGetValue(requestUrl, out response))
+            if (this.responseMap.TryGetValue(requestUrl, out cachedResponse))
             {
-                return Task.FromResult(response);
+                return CopyHttpResponseMessage(cachedResponse);
             }
 
             if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl + requestBody, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
@@ -140,6 +140,21 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             }
 
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
+        }
+
+        private async Task<HttpResponseMessage> CopyHttpResponseMessage(HttpResponseMessage response)
+        {
+            HttpResponseMessage responseCopy = new HttpResponseMessage()
+            {
+                Content = new StringContent(await response.Content.ReadAsStringAsync().ConfigureAwait(false)),
+                StatusCode = response.StatusCode
+            };
+
+            foreach (KeyValuePair<string, IEnumerable<string>> header in response.Headers)
+            {
+                responseCopy.Headers.Add(header.Key, header.Value);
+            }
+            return responseCopy;
         }
     }
 }
