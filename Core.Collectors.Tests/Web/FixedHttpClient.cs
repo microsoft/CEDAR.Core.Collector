@@ -45,7 +45,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public void AddResponse(string requestUrl, HttpStatusCode responseStatusCode, string responseMessage, Dictionary<string, List<string>> responseHeaders = null)
         {
-            AddResponse(requestUrl, string.Empty, responseStatusCode, responseMessage, responseHeaders);
+            this.AddResponse(requestUrl, string.Empty, responseStatusCode, responseMessage, responseHeaders);
         }
 
         public void AddResponse(string requestUrl, string requestBody, HttpStatusCode responseStatusCode, string responseMessage, Dictionary<string, List<string>> responseHeaders = null)
