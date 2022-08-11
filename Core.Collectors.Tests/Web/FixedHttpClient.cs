@@ -146,6 +146,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
         {
             HttpResponseMessage responseCopy = new HttpResponseMessage()
             {
+                // Copying response message using ReadAsStringAsync ensures that multiple reads of Content are safe.
                 Content = new StringContent(await response.Content.ReadAsStringAsync().ConfigureAwait(false)),
                 StatusCode = response.StatusCode
             };
