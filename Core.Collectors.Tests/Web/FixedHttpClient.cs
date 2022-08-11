@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Authentication;
@@ -14,19 +14,23 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 {
     public class FixedHttpClient : IHttpClient
     {
-        private readonly Dictionary<string, Tuple<HttpStatusCode, string>> requestToResponseMap;
+        public int RequestCount { get; private set; }
+
+        private readonly Dictionary<string, HttpResponseMessage> responseMap;
         private readonly Dictionary<string, Func<Tuple<HttpStatusCode, string>>> requestToResponseGeneratorMap;
 
         public FixedHttpClient()
         {
-            this.requestToResponseMap = new Dictionary<string, Tuple<HttpStatusCode, string>>();
+            this.responseMap = new Dictionary<string, HttpResponseMessage>();
             this.requestToResponseGeneratorMap = new Dictionary<string, Func<Tuple<HttpStatusCode, string>>>();
+            this.RequestCount = 0;
         }
 
         public void Reset()
         {
-            this.requestToResponseMap.Clear();
+            this.responseMap.Clear();
             this.requestToResponseGeneratorMap.Clear();
+            this.RequestCount = 0;
         }
 
         public void AddResponseGenerator(string requestUrl, Func<Tuple<HttpStatusCode, string>> resposneGenerator)
@@ -39,25 +43,38 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             this.requestToResponseGeneratorMap.Add(requestUrl + responseBody, resposneGenerator);
         }
 
-        public void AddResponse(string requestUrl, HttpStatusCode responseStatusCode, string responseMessage)
+        public void AddResponse(string requestUrl, HttpStatusCode responseStatusCode, string responseMessage, Dictionary<string, List<string>> responseHeaders = null)
         {
-            this.requestToResponseMap.Add(requestUrl, Tuple.Create(responseStatusCode, responseMessage));
+            this.AddResponse(requestUrl, string.Empty, responseStatusCode, responseMessage, responseHeaders);
         }
 
-        public void AddResponse(string requestUrl, string requestBody, HttpStatusCode responseStatusCode, string responseMessage)
+        public void AddResponse(string requestUrl, string requestBody, HttpStatusCode responseStatusCode, string responseMessage, Dictionary<string, List<string>> responseHeaders = null)
         {
-            this.requestToResponseMap.Add(requestUrl + requestBody, Tuple.Create(responseStatusCode, responseMessage));
+            requestUrl += requestBody;
+            HttpResponseMessage response = new HttpResponseMessage()
+            {
+                StatusCode = responseStatusCode,
+                Content = new StringContent(responseMessage)
+            };
+
+            if (responseHeaders != null)
+            {
+                foreach (KeyValuePair<string, List<string>> header in responseHeaders)
+                {
+                    response.Headers.Add(header.Key, header.Value);
+                }
+            }
+
+            this.responseMap.Add(requestUrl, response);
         }
 
         public Task<HttpResponseMessage> GetAsync(string requestUrl, IAuthentication authentication)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out Tuple<HttpStatusCode, string> response))
+            this.RequestCount++;
+
+            if (this.responseMap.TryGetValue(requestUrl, out HttpResponseMessage response))
             {
-                return Task.FromResult(new HttpResponseMessage()
-                {
-                    StatusCode = response.Item1,
-                    Content = new StringContent(response.Item2),
-                });
+                return CopyHttpResponseMessage(response);
             }
 
             if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
@@ -100,24 +117,16 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
 
         public Task<HttpResponseMessage> PostAsync(string requestUrl, IAuthentication authentication, string requestBody)
         {
-            if (this.requestToResponseMap.TryGetValue(requestUrl + requestBody, out Tuple<HttpStatusCode, string> response))
+            this.RequestCount++;
+
+            if (this.responseMap.TryGetValue(requestUrl + requestBody, out HttpResponseMessage cachedResponse))
             {
-                HttpResponseMessage result = new HttpResponseMessage()
-                {
-                    StatusCode = response.Item1,
-                    Content = new StringContent(response.Item2),
-                };
-                return Task.FromResult(result);
+                return CopyHttpResponseMessage(cachedResponse);
             }
 
-            if (this.requestToResponseMap.TryGetValue(requestUrl, out response))
+            if (this.responseMap.TryGetValue(requestUrl, out cachedResponse))
             {
-                HttpResponseMessage result = new HttpResponseMessage()
-                {
-                    StatusCode = response.Item1,
-                    Content = new StringContent(response.Item2),
-                };
-                return Task.FromResult(result);
+                return CopyHttpResponseMessage(cachedResponse);
             }
 
             if (this.requestToResponseGeneratorMap.TryGetValue(requestUrl + requestBody, out Func<Tuple<HttpStatusCode, string>> responseGenerator))
@@ -131,6 +140,23 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             }
 
             throw new Exception($"FixedHttpClient: Unknown request '{requestUrl}'.");
+        }
+
+        private async Task<HttpResponseMessage> CopyHttpResponseMessage(HttpResponseMessage response)
+        {
+            HttpResponseMessage responseCopy = new HttpResponseMessage()
+            {
+                // Copying response message using ReadAsStringAsync ensures that multiple reads of Content are safe.
+                Content = new StringContent(await response.Content.ReadAsStringAsync().ConfigureAwait(false)),
+                StatusCode = response.StatusCode
+            };
+
+            foreach (KeyValuePair<string, IEnumerable<string>> header in response.Headers)
+            {
+                responseCopy.Headers.Add(header.Key, header.Value);
+            }
+
+            return responseCopy;
         }
     }
 }
