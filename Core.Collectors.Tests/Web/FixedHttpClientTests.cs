@@ -2,6 +2,9 @@ using Microsoft.CloudMine.Core.Collectors.Authentication;
 using Microsoft.CloudMine.Core.Collectors.Tests.Authentication;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -21,6 +24,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             IAuthentication authentication = new NoopAuthentication();
             httpClient.AddResponse(url, HttpStatusCode.OK, responseContent);
 
+            // test that content can be read from 2 identical requests to FixedHttpClient.
             HttpResponseMessage responseMessage1 = await httpClient.GetAsync(url, authentication).ConfigureAwait(false);
             Stream contentStream1 = await responseMessage1.Content.ReadAsStreamAsync().ConfigureAwait(false);
             byte[] buffer1 = new byte[contentStream1.Length];
@@ -34,8 +38,6 @@ namespace Microsoft.CloudMine.Core.Collectors.Tests.Web
             contentStream2.Read(buffer2, 0, (int)contentStream2.Length);
             string contentString2 = Encoding.UTF8.GetString(buffer2);
             Assert.AreEqual(responseContent, contentString2);
-
-
         }
     }
 }
