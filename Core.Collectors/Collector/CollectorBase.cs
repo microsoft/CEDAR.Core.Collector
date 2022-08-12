@@ -20,6 +20,8 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
 {
     public abstract class CollectorBase<T> where T : CollectionNode
     {
+        private static readonly TelemetryMetric<long> IgnoredParentMetadataMetric = new TelemetryMetric<long>("IgnoredParentMetadata");
+
         private readonly List<IRecordWriter> recordWriters;
         private readonly ITelemetryClient telemetryClient;
         private readonly IAuthentication authentication;
@@ -137,6 +139,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                             // There is existing code that did not have this assumption, so for now, log potential overrides in telemetry so that we can clean them up in time.
                             if (childNodeClone.AdditionalMetadata.TryGetValue(parentMetadataName, out JToken metadataValue))
                             {
+                                // ToDo: remove this event once we confirm how to debug it through the metric.
                                 Dictionary<string, string> properties = new Dictionary<string, string>()
                                 {
                                     { "ChildRecordType", childNodeClone.RecordType },
@@ -147,6 +150,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                                     { "NewValue", parentMetadataValue.Value<string>() },
                                 };
                                 this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
+
+                                TagList tags = new TagList();
+                                tags.Add("ChildRecordType", childNodeClone.RecordType);
+                                tags.Add("ParentRecordType", collectionNode.RecordType);
+                                tags.Add("ApiName", collectionNode.ApiName);
+                                tags.Add("Name", parentMetadataName);
+                                tags.Add("Value", metadataValue.Value<string>());
+                                tags.Add("NewValue", parentMetadataValue.Value<string>());
+                                IgnoredParentMetadataMetric.Add(1, tags);
                             }
                             else
                             {
@@ -299,6 +311,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                     // There is existing code that did not have this assumption, so for now, log potential overrides in telemetry so that we can clean them up in time.
                     if (childNodeClone.AdditionalMetadata.TryGetValue(parentMetadataName, out JToken metadataValue))
                     {
+                        // ToDo: remove this event once we confirm how to debug it through the metric.
                         Dictionary<string, string> properties = new Dictionary<string, string>()
                         {
                             { "ChildRecordType", childNodeClone.RecordType },
@@ -309,6 +322,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                             { "NewValue", parentMetadataValue.Value<string>() },
                         };
                         this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
+
+                        TagList tags = new TagList();
+                        tags.Add("ChildRecordType", childNodeClone.RecordType);
+                        tags.Add("ParentRecordType", collectionNode.RecordType);
+                        tags.Add("ApiName", collectionNode.ApiName);
+                        tags.Add("Name", parentMetadataName);
+                        tags.Add("Value", metadataValue.Value<string>());
+                        tags.Add("NewValue", parentMetadataValue.Value<string>());
+                        IgnoredParentMetadataMetric.Add(1, tags);
                     }
                     else
                     {
