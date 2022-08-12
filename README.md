@@ -1,7 +1,7 @@
 | Pipeline Name | Pipeline Status |
 | ------------- | --------------- |
 | CEDAR.Core.Collector-GitHub.Validation | [![Build Status](https://dev.azure.com/mseng/Domino/_apis/build/status/CloudMine/Pipelines/GitHub/Collectors/CEDAR.Core.Collector-GitHub.Validation?repoName=microsoft%2FCEDAR.Core.Collector&branchName=main)](https://dev.azure.com/mseng/Domino/_build/latest?definitionId=10590&repoName=microsoft%2FCEDAR.Core.Collector&branchName=main) |
-| CEDAR.Core.Collector-AzureDevOps.Validation | [![Build Status](https://dev.azure.com/mseng/Domino/_apis/build/status/CloudMine/Pipelines/Azure%20DevOps/Collectors/vKivanc/CEDAR.Core.Collector-AzureDevOps.Validation?repoName=microsoft%2FCEDAR.Core.Collector&branchName=main)](https://dev.azure.com/mseng/Domino/_build/latest?definitionId=10568&repoName=microsoft%2FCEDAR.Core.Collector&branchName=main) |
+| CEDAR.Core.Collector-AzureDevOps.Validation | [![Build Status](https://dev.azure.com/mseng/Domino/_apis/build/status/CloudMine/Pipelines/Azure%20DevOps/Collectors/vModern/CEDAR.Core.Collector-AzureDevOps.Validation?repoName=microsoft%2FCEDAR.Core.Collector&branchName=main)](https://dev.azure.com/mseng/Domino/_build/latest?definitionId=13479&repoName=microsoft%2FCEDAR.Core.Collector&branchName=main) |
 
 # Introduction
 
