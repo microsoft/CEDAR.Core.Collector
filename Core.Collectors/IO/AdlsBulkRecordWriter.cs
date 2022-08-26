@@ -45,6 +45,9 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         private readonly HashSet<string> filePaths;
 
+        // We have seen cases that uploads get overwritten because they are started at the exact same second. Therefore, always append a serial integer at the end of upload path.
+        private long uploadIndex;
+
         // Keeping this constructor for backwards compatibility for now.
         public AdlsBulkRecordWriter(AdlsClient adlsClient,
                                     string identifier,
@@ -69,6 +72,8 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             this.currentSuffix = null;
 
             this.filePaths = new HashSet<string>();
+
+            this.uploadIndex = 1;
         }
 
         protected override Task InitializeInternalAsync()
@@ -142,6 +147,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
                     string finalAdlsOutputPath = finalOutputPath.Replace($"{this.localRoot}\\", $"{adlsDirectory}/");
                     this.AddOutputPath(finalAdlsOutputPath);
                 }
+                this.uploadIndex++;
             }
             catch (Exception exception)
             {
@@ -171,6 +177,11 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
                 this.filePaths.Clear();
             }
+        }
+
+        protected override string GetOutputPathPrefix(DateTime dateTimeUtc)
+        {
+            return $"{base.GetOutputPathPrefix(dateTimeUtc)}_{this.uploadIndex}";
         }
 
         private string BulkUploadToAdlsConfig(string fileName, AdlsConfig adlsConfig)
