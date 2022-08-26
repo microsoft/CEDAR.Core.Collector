@@ -189,7 +189,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
             Stopwatch uploadTimer = Stopwatch.StartNew();
             string adlsDirectory = $"{adlsConfig.AdlsRoot}/{adlsConfig.Version}";
 
-            TransferStatus status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory);
+            TransferStatus status = adlsConfig.AdlsClient.BulkUpload(this.localRoot, adlsDirectory, shouldOverwrite: IfExists.Fail);
             bool retried = false;
             if (status.EntriesFailed.Count != 0)
             {
