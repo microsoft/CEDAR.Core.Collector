@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using Microsoft.CloudMine.Core.Collectors.Context;
@@ -81,7 +81,7 @@ namespace Microsoft.CloudMine.Core.Collectors.IO
 
         protected string OutputPathPrefix => this.GetOutputPathPrefix(this.functionContext.FunctionStartDate);
 
-        protected string GetOutputPathPrefix(DateTime dateTimeUtc)
+        protected virtual string GetOutputPathPrefix(DateTime dateTimeUtc)
         {
             return $"{this.outputPathPrefix}/{dateTimeUtc:yyyy/MM/dd/HH.mm.ss}_{this.identifier}_{this.functionContext.SessionId}";
         }
