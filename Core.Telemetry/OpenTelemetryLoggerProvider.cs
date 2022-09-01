@@ -17,7 +17,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
-
                     this.loggerFactory = LoggerFactory.Create(builder =>
                     {
                         builder.AddOpenTelemetry(loggerOptions =>
@@ -37,7 +36,9 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     {
                         builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddConsoleExporter());
                     });
+
                     break;
+
                 default:
                     this.loggerFactory = LoggerFactory.Create(builder => { });
                     break;

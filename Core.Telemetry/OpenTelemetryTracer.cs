@@ -30,7 +30,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
-
                     tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new AlwaysOnSampler()).AddSource(SUBSCRIPTION_KEY).AddGenevaTraceExporter(options =>
                     {
                         options.ConnectionString = "EtwSession=OpenTelemetry";
