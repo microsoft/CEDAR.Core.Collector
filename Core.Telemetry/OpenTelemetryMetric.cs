@@ -41,8 +41,13 @@ namespace Microsoft.CloudMine.Core.Telemetry
                     }).Build();
 
                     break;
-                default:
+
+                case OpenTelemetryHelpers.ConsoleExporterName:
                     meterProvider = Sdk.CreateMeterProviderBuilder().AddMeter(SUBSCRIPTION_KEY).AddConsoleExporter().Build();
+                    break;
+
+                default:
+                    meterProvider = Sdk.CreateMeterProviderBuilder().AddMeter(SUBSCRIPTION_KEY).Build();
                     break;
             }
 

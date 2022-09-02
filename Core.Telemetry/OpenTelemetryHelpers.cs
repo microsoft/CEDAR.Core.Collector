@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using System;
 using System.Diagnostics;
@@ -9,6 +9,7 @@ namespace Microsoft.CloudMine.Core.Telemetry
     public static class OpenTelemetryHelpers
     {
         public const string GenevaExporterName = "Geneva";
+        public const string ConsoleExporterName = "Console";
 
         public static readonly string Product;
         public static readonly string Service;
