@@ -23,7 +23,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         private static readonly TelemetryMetric<long> IgnoredParentMetadataMetric = new TelemetryMetric<long>("IgnoredParentMetadata");
 
         private readonly List<IRecordWriter> recordWriters;
-        private readonly ITelemetryClient telemetryClient;
+        protected ITelemetryClient TelemetryClient { get; }
         private readonly IAuthentication authentication;
 
         private readonly bool enableLoopDetection;
@@ -33,7 +33,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
         protected CollectorBase(IAuthentication authentication, ITelemetryClient telemetryClient, List<IRecordWriter> recordWriters, bool enableLoopDetection = true)
         {
             this.authentication = authentication;
-            this.telemetryClient = telemetryClient;
+            this.TelemetryClient = telemetryClient;
             this.recordWriters = recordWriters;
 
             this.enableLoopDetection = enableLoopDetection;
@@ -149,7 +149,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                                     { "Value", metadataValue.Value<string>() },
                                     { "NewValue", parentMetadataValue.Value<string>() },
                                 };
-                                this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
+                                this.TelemetryClient.TrackEvent("IgnoredParentMetadata", properties);
 
                                 TagList tags = new TagList();
                                 tags.Add("ChildRecordType", childNodeClone.RecordType);
@@ -178,7 +178,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                         { "ResponseStatusCode", response.StatusCode.ToString() },
                         { "ResponseContent", responseContent },
                     };
-                    this.telemetryClient.TrackEvent("FailedExternalRequest", properties);
+                    this.TelemetryClient.TrackEvent("FailedExternalRequest", properties);
                 }
             }
 
@@ -321,7 +321,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Collector
                             { "Value", metadataValue.Value<string>() },
                             { "NewValue", parentMetadataValue.Value<string>() },
                         };
-                        this.telemetryClient.TrackEvent("IgnoredParentMetadata", properties);
+                        this.TelemetryClient.TrackEvent("IgnoredParentMetadata", properties);
 
                         TagList tags = new TagList();
                         tags.Add("ChildRecordType", childNodeClone.RecordType);
