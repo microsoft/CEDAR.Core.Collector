@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
@@ -17,7 +17,6 @@ namespace Microsoft.CloudMine.Core.Telemetry
             switch (OpenTelemetryHelpers.OpenTelemetryExporter)
             {
                 case OpenTelemetryHelpers.GenevaExporterName:
-
                     this.loggerFactory = LoggerFactory.Create(builder =>
                     {
                         builder.AddOpenTelemetry(loggerOptions =>
@@ -32,13 +31,16 @@ namespace Microsoft.CloudMine.Core.Telemetry
 
                     break;
 
-                default:
-                    // default to console exporter for local debuugging.
+                case OpenTelemetryHelpers.ConsoleExporterName:
                     this.loggerFactory = LoggerFactory.Create(builder =>
                     {
                         builder.AddOpenTelemetry(loggerOptions => loggerOptions.AddConsoleExporter());
                     });
 
+                    break;
+
+                default:
+                    this.loggerFactory = LoggerFactory.Create(builder => { });
                     break;
             }
         }
