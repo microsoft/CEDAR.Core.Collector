@@ -26,9 +26,9 @@ namespace Microsoft.CloudMine.Core.Collectors.Web
         {
             using Stream responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             // Loading a stream / text into JObject expands ~10x in memory. In other words, a 100MB response, will approx. take 1GB ram.
-            // Our machines have 3.5 GB ram. I am leaving 1GB for OS (might not be needed but just in case) and the rest of the code.
-            // That leaves 2.5 GB to be shared between 6, or ~400 MB each, so ~40 MB raw response.
-            if (responseStream.Length > 40 * MB)
+            // Our machines (where this is a problem --- for CG collection) have 16 GB ram. I am leaving 4 GB for OS (might not be needed but just in case) and the rest of the code.
+            // That leaves 12 GB to be shared between 6, or 2 GB each, so ~200 MB raw response.
+            if (responseStream.Length > 200 * MB)
             {
                 return Tuple.Create(false, (JObject)null);
             }
