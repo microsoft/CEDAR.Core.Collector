@@ -1,23 +1,23 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure;
+using Azure.Data.Tables;
 using Microsoft.CloudMine.Core.Collectors.IO;
 using Microsoft.CloudMine.Core.Telemetry;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Microsoft.CloudMine.Core.Collectors.Cache
 {
-    public class AzureTableCache<T> : ICache<T> where T : TableEntityWithContext
+    public class AzureTableCache<T> : ICache<T> where T : class, ITableEntityWithContext, new()
     {
         private readonly ITelemetryClient telemetryClient;
         private readonly string name;
         private readonly string storageConnectionEnvironmentVariable;
 
-        private CloudTable table;
+        private TableClient table;
         private bool initialized;
 
         public AzureTableCache(ITelemetryClient telemetryClient, string name, string storageConnectionEnvironmentVariable = "AzureWebJobsStorage")
@@ -28,7 +28,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
             this.storageConnectionEnvironmentVariable = storageConnectionEnvironmentVariable;
         }
 
-        public AzureTableCache(ITelemetryClient telemetryClient, CloudTable table)
+        public AzureTableCache(ITelemetryClient telemetryClient, TableClient table)
         {
             this.telemetryClient = telemetryClient;
             this.table = table;
@@ -44,7 +44,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return;
             }
 
-            this.table = await AzureHelpers.GetStorageTableAsync(this.name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
+            this.table = await AzureHelpers.GetStorageTableUsingMsiAsync(this.name, this.storageConnectionEnvironmentVariable).ConfigureAwait(false);
 
             this.initialized = true;
         }
@@ -57,11 +57,11 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return;
             }
 
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(tableEntity);
             try
             {
-                TableResult insertOrReplaceResult = await this.table.ExecuteAsync(insertOrReplaceOperation).ConfigureAwait(false);
-                int insertOrReplaceStatusCode = insertOrReplaceResult.HttpStatusCode;
+                // TODO: validate TableUpdateMode
+                Response insertOrReplaceResult = await this.table.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace).ConfigureAwait(false);
+                int insertOrReplaceStatusCode = insertOrReplaceResult.Status;
                 // 204: no content => InsertOrReplace operation does not return any content when successful.
                 if (insertOrReplaceStatusCode != 204)
                 {
@@ -89,16 +89,14 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
         {
             if (currentTableEntity == null)
             {
-                TableOperation insertOperation = TableOperation.Insert(newTableEntity);
                 try
                 {
-                    await this.table.ExecuteAsync(insertOperation).ConfigureAwait(false);
+                    await this.table.UpsertEntityAsync(newTableEntity).ConfigureAwait(false);
                     return true;
                 }
-                catch (Exception insertException) when (insertException is StorageException)
+                catch (Exception insertException) when (insertException is RequestFailedException insertStorageException)
                 {
-                    StorageException insertStorageException = (StorageException)insertException;
-                    int insertStatusCode = insertStorageException.RequestInformation.HttpStatusCode;
+                    int insertStatusCode = insertStorageException.Status;
                     if (insertStatusCode != 409) // Ignore 409, since it (Conflict) indicates that someone else did the update before us.
                     {
                         Dictionary<string, string> properties = new Dictionary<string, string>()
@@ -114,18 +112,15 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return false;
             }
 
-            string currentETag = currentTableEntity.ETag;
-            newTableEntity.ETag = currentETag;
-            TableOperation replaceOperation = TableOperation.Replace(newTableEntity);
+            newTableEntity.ETag = currentTableEntity.ETag;
             try
             {
-                await this.table.ExecuteAsync(replaceOperation).ConfigureAwait(false);
+                await this.table.UpsertEntityAsync(newTableEntity, TableUpdateMode.Replace).ConfigureAwait(false);
                 return true;
             }
-            catch (Exception replaceException) when (replaceException is StorageException)
+            catch (Exception replaceException) when (replaceException is RequestFailedException replaceStorageException)
             {
-                StorageException replaceStorageException = (StorageException)replaceException;
-                int replaceStatusCode = replaceStorageException.RequestInformation.HttpStatusCode;
+                int replaceStatusCode = replaceStorageException.Status;
                 if (replaceStatusCode != 412) // Ignore 412, since it (Pre-condition failed) indicates that someone else did the update before us.
                 {
                     Dictionary<string, string> properties = new Dictionary<string, string>()
@@ -149,14 +144,13 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                 return null;
             }
 
-            TableOperation retrieveOperation = TableOperation.Retrieve<T>(tableEntity.PartitionKey, tableEntity.RowKey);
             try
             {
-                TableResult retrieveResult = await this.table.ExecuteAsync(retrieveOperation).ConfigureAwait(false);
-                int retrieveStatusCode = retrieveResult.HttpStatusCode;
+                Response<T> retrieveResult = await this.table.GetEntityAsync<T>(tableEntity.PartitionKey, tableEntity.RowKey).ConfigureAwait(false);
+                int retrieveStatusCode = retrieveResult.GetRawResponse().Status;
                 // 200: OK => The item exists in the cache and retrieve was successful.
                 // 404: Does not exist => The item does not exist in the cache.
-                if (retrieveStatusCode != 200 && retrieveStatusCode != 404) 
+                if (retrieveStatusCode != 200 && retrieveStatusCode != 404)
                 {
                     Dictionary<string, string> properties = new Dictionary<string, string>(tableEntity.GetContext())
                     {
@@ -166,7 +160,7 @@ namespace Microsoft.CloudMine.Core.Collectors.Cache
                     this.telemetryClient.TrackEvent("CachingError", properties);
                 }
 
-                return (T)retrieveResult.Result;
+                return retrieveResult.Value;
             }
             catch (Exception exception)
             {
